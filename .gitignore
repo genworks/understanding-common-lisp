@@ -1,0 +1,11 @@
+*.aux
+*.pdf
+*.idx
+*.out
+*.ilg
+*.ind
+*.log
+*.toc
+*.bak
+*~
+*.Zone.Identifier
