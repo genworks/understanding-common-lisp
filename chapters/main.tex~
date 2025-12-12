@@ -1,0 +1,114 @@
+\documentclass[11pt]{book}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{verbatim}
+\usepackage{fancyvrb}
+\usepackage{listings}
+\usepackage{hyperref}
+
+% Listings setup for code examples
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true
+}
+
+\title{Basic Lisp Techniques}
+\author{David J. Cooper, Jr.}
+\date{February 14, 2011}
+
+\begin{document}
+
+\frontmatter
+
+\maketitle
+
+\clearpage
+\thispagestyle{empty}
+\vspace*{\fill}
+\begin{center}
+\copyright{} Copyright 2011, Franz Inc. and David J. Cooper, Jr.
+\end{center}
+\vspace*{\fill}
+\clearpage
+
+% Foreword
+\chapter*{Foreword\footnote{this Foreword was authored by Franz Inc.}}
+\addcontentsline{toc}{chapter}{Foreword}
+
+Computers, and the software applications that power them, permeate every facet of our
+daily lives. From groceries to airline reservations to dental appointments, our reliance
+on technology is all-encompassing. And, it's not enough. Every day, our expectations of
+technology and software increase:
+
+\begin{itemize}
+\item smart appliances that can be controlled via the internet
+\item better search engines that generate information we actually want
+\item voice-activated laptops
+\item cars that know exactly where to go
+\end{itemize}
+
+The list is endless. Unfortunately, there is not an endless supply of programmers and
+developers to satisfy our insatiable appetites for new features and gadgets. Every day,
+hundreds of magazine and on-line articles focus on the time and people resources needed to
+support future technological expectations. Further, the days of unlimited funding are over.
+Investors want to see results, fast.
+
+Common Lisp (CL) is one of the few languages and development options that can meet
+these challenges. Powerful, flexible, changeable on the fly --- increasingly, CL is playing
+a leading role in areas with complex problem-solving demands. Engineers in the fields of
+bioinformatics, scheduling, data mining, document management, B2B, and E-commerce
+have all turned to CL to complete their applications on time and within budget. CL,
+however, no longer just appropriate for the most complex problems. Applications of modest
+complexity, but with demanding needs for fast development cycles and customization, are
+also ideal candidates for CL.
+
+Other languages have tried to mimic CL, with limited success. Perl, Python, Java,
+C++, C\# --- they all incorporate some of the features that give Lisp its power, but their
+implementations tend to be brittle.
+
+The purpose of this book is to showcase the features that make CL so much better
+than these imitators, and to give you a ``quick-start'' guide for using Common Lisp as a
+development environment. If you are an experienced programmer in languages other than
+Lisp, this guide gives you all the tools you need to begin writing Lisp applications. If you've
+had some exposure to Lisp in the past, this guide will help refresh those memories and shed
+some new light on CL for you.
+
+But be careful, Lisp can be addicting! This is why many Fortune 500 companies will
+use nothing else on their 24/7, cutting-edge, mission-critical applications. After reading
+this book, trying our software, and experiencing a 3 to 10 times increase in productivity,
+we believe you will feel the same way.
+
+\tableofcontents
+
+\mainmatter
+
+% Chapter 1
+\include{chapter1}
+
+% Chapter 2
+\include{chapter2}
+
+% Chapter 3
+\include{chapter3}
+
+% Chapter 4
+\include{chapter4}
+
+% Chapter 5
+\include{chapter5}
+
+\backmatter
+
+% Appendices
+\appendix
+\include{appendixA}
+\include{appendixB}
+\include{appendixC}
+
+% Afterword
+\include{afterword}
+
+\end{document}

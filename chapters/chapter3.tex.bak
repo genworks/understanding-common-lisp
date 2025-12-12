@@ -1,0 +1,1753 @@
+\chapter{The CL Language}
+
+If you are new to the CL language, we recommend that you supplement this chapter with
+other resources. See the Bibliography in Appendix B for some suggestions. The Bibliography also lists two interactive online CL tutorials from Tulane University and Texas A\&M,
+which you may wish to visit.
+
+In the meantime, this chapter will provide a condensed overview of the language. Please
+note, however, that this book is intended as a summary, and will not delve into some of the
+more subtle and powerful techniques possible with Common Lisp\index{Common Lisp}.
+
+\section{Overview of CL and its Syntax}
+
+The first thing you should observe about CL (and most languages in the Lisp family) is
+that it uses a generalized prefix notation.
+
+One of the most frequent actions in a CL program, or at the toplevel read-eval-print
+loop, is to call a function. This is most often done by writing an expression which names
+the function, followed by its arguments. Here is an example:
+
+\begin{verbatim}
+(+ 2 2)
+\end{verbatim}
+
+This expression consists of the function named by the symbol ``+,'' followed by the arguments
+2 and another 2. As you may have guessed, when this expression is evaluated it will return
+the value 4.
+
+\textbf{Try it:} Try typing this expression at your command prompt, and see the return-value
+being printed on the console.
+
+What is it that is actually happening here? When CL is asked to evaluate an expression (as in the toplevel read-eval-print loop), it evaluates the expression according to the
+following rules:
+
+\begin{enumerate}
+\item If the expression is a number (i.e. looks like a number), it simply evaluates to itself (a
+number):
+
+\begin{verbatim}
+CL-USER(8): 99
+99
+\end{verbatim}
+
+\item If the expression looks like a string (i.e. is surrounded by double-quotes), it also simply
+evaluates to itself:
+
+\begin{verbatim}
+CL-USER(9): "Be braver -- you can't cross a chasm in two small jumps."
+"Be braver -- you can't cross a chasm in two small jumps."
+\end{verbatim}
+
+\item If the expression looks like a literal symbol, it will simply evaluate to that symbol
+(more on this in Section 3.1.4):
+
+\begin{verbatim}
+CL-USER(12): 'my-symbol
+MY-SYMBOL
+\end{verbatim}
+
+\item If the expression looks like a list (i.e. is surrounded by parentheses), CL assumes that
+the first element in this list is a symbol which names a function or a macro, and
+the rest of the elements in the list represent the arguments to the function or macro.
+(We will discuss functions first, macros later). A function can take zero or more
+arguments, and can return zero or more return-values. Often a function only returns
+one return-value:
+
+\begin{verbatim}
+CL-USER(14): (expt 2 5)
+32
+\end{verbatim}
+\end{enumerate}
+
+\textbf{Try it:} Try typing the following functional expressions at your command prompt, and
+convince yourself that the printed return-values make sense:
+
+\begin{verbatim}
+(+ 2 2)
+
+(+ 2)
+
+2
+
+(+)
+
+(+ (+ 2 2) (+ 3 3))
+
+(+ (+ 2 2))
+
+(sys:user-name)
+
+(user-homedir-pathname)
+
+(get-universal-time) ;; returns number of seconds since January 1, 1900
+
+(search "Dr." "I am Dr. Strangelove")
+
+"I am Dr. Strangelove"
+
+(subseq "I am Dr. Strangelove"
+        (search "Dr." "I am Dr. Strangelove"))
+\end{verbatim}
+
+\subsection{Evaluation of Arguments to a Function}
+
+Note that the arguments to a function can themselves be any kind of the above expressions.
+They are evaluated in order, from left to right, and finally they are passed to the function
+for it to evaluate. This kind of nesting can be arbitrarily deep. Do not be concerned about
+getting lost in an ocean of parentheses --- most serious text editors can handle deeply nested
+parentheses with ease, and moreover will automatically indent your expressions so that you,
+as the programmer, never have to concern yourself with matching parentheses.
+
+\subsection{Lisp Syntax Simplicity}
+
+One of the nicest things about Lisp is the simplicity and consistency of its syntax. What
+we have covered so far pertaining to the evaluation of arguments to functions is just about
+everything you need to know about the syntax. The rules for macros are very similar, with
+the primary difference being that all the arguments of a macro are not necessarily evaluated
+at the time the macro is called --- they can be transformed into something else first.
+
+This simple consistent syntax is a welcome relief from other widely used languages such
+as C, C++, Java, Perl, and Python. These languages claim to use a ``more natural'' ``infix''
+syntax, but in reality their syntax is a confused mixture of prefix, infix, and postfix. They
+use infix only for the simplest arithmetic operations such as
+
+\begin{verbatim}
+2 + 2
+\end{verbatim}
+
+and
+
+\begin{verbatim}
+3 * 13
+\end{verbatim}
+
+and use postfix in certain cases such as
+
+\begin{verbatim}
+i++
+\end{verbatim}
+
+and
+
+\begin{verbatim}
+char*
+\end{verbatim}
+
+But mostly they actually use a prefix syntax much the same as Lisp, as in:
+
+\begin{verbatim}
+split(@array, ":");
+\end{verbatim}
+
+So, if you have been programming in these other languages, you have been using prefix
+notation all along, but may not have noticed it. If you look at it this way, the prefix
+notation of Lisp will seem much less alien to you.
+
+\subsection{Turning Off Evaluation}
+
+Sometimes you want to specify an expression at the toplevel read-eval-print loop, or inside
+a program, but you do not want CL to evaluate this expression. You want just the literal
+expression. CL provides the special operator \texttt{quote} for this purpose. For example,
+
+\begin{verbatim}
+(quote a)
+\end{verbatim}
+
+will return the literal symbol A. Note that, by default, the CL reader will convert all symbol
+names to uppercase at the time the symbol is read into the system. Note also that symbols,
+if evaluated ``as is,'' (i.e. without the quote), will by default behave as variables, and CL
+will attempt to retrieve an associated value. More on this later.
+
+Here is another example of using \texttt{quote} to return a literal expression:
+
+\begin{verbatim}
+(quote (+ 1 2))
+\end{verbatim}
+
+Unlike evaluating a list expression ``as is,'' this will return the literal list \texttt{(+ 1 2)}. This list
+may now be accessed as a normal list data structure\footnote{It should be noted, however, that when a quoted literal list is created like this, it is now technically a
+constant --- you should not modify it with destructive operators\index{destructive operators}.}.
+
+Common Lisp defines the abbreviation \texttt{'} as a shorthand way to ``wrap'' an expression
+in a call to \texttt{quote}. So the previous examples could equivalently be written as:
+
+\begin{verbatim}
+'a
+
+'(+ 1 2)
+\end{verbatim}
+
+\subsection{Fundamental CL Data Types}
+
+Common Lisp natively supports many data types common to other languages, such as
+numbers, strings, and arrays\index{arrays}. Native to CL is also a set of types which you may not have
+come across in other languages, such as lists, symbols, and hash tables\index{hash tables}. In this overview we
+will touch on numbers, strings, symbols, and lists. Later in the book we will provide more
+detail on some CL-specific data types.
+
+Regarding data types, CL follows a paradigm called dynamic typing. Basically this
+means that values have type, but variables do not necessarily have type, and typically
+variables are not ``pre-declared'' to be of a particular type.
+
+\subsubsection{Numbers}
+
+Numbers in CL form a hierarchy of types, which includes Integers, Ratios, Floating Point,
+and Complex numbers. For many purposes you only need to think of a value as a ``number,''
+without getting any more specific than that. Most arithmetic operations, such as \texttt{+}, \texttt{-}, \texttt{*},
+\texttt{/}, etc, will automaticaly do any necessary type coercion on their arguments and will return
+a number of the appropriate type.
+
+CL supports a full range of floating-point decimal numbers, as well as true Ratios,
+which means that 1/3 is a true one-third, not 0.333333333 rounded off at some arbitrary
+precision.
+
+As we have seen, numbers in CL are a native data type which simply evaluate to themselves when entered at the toplevel or included in an expression.
+
+\subsubsection{Strings}
+
+Strings are actually a specialized kind of Array, namely a one-dimensional array (vector)
+made up of characters. These characters can be letters, numbers, or punctuation, and in
+some cases can include characters from international character sets (e.g. Unicode) such as
+Chinese Hanzi or Japanese Kanji. The string delimiter in CL is the double-quote character
+(``).
+
+As we have seen, strings in CL are a native data type which simply evaluate to themselves
+when included in an expression.
+
+\subsubsection{Symbols}
+
+Symbols are such an important data structure in CL that people sometimes refer to CL
+as a ``Symbolic Computing Language.'' Symbols are a type of CL object which provides
+your program with a built-in mechanism to store and retrieve values and functions, as well
+as being useful in their own right. A symbol is most often known by its name (actually a
+string), but in fact there is much more to a symbol than its name. In addition to the name,
+symbols also contain a function slot, a value slot, and an open-ended Property-list slot in
+which you can store an arbitrary number of named properties.
+
+For a named function such as \texttt{+}, the function-slot of the symbol \texttt{+} contains the actual
+function itself. The value-slot of a symbol can contain any value, allowing the symbol to
+act as a global variable, or Parameter. And the Property-list, or plist slot, can contain an
+arbitrary amount of information.
+
+This separation of the symbol data structure into function, value, and plist slots is one
+obvious distinction between Common Lisp and most other Lisp dialects. Most other dialects
+allow only one (1) ``thing'' to be stored in the symbol data structure, other than its name
+(e.g. either a function or a value, but not both at the same time). Because Common Lisp
+does not impose this restriction, it is not necessary to contrive names, for example for your
+variables, to avoid conflicting with existing ``reserved words'' in the system. For example,
+``list'' is the name of a built-in function in CL. But you may freely use ``list'' as a variable
+as well. There is no need to contrive arbitrary abbreviations such as ``lst.''
+
+How symbols are evaluated depends on where they occur in an expression. As we have
+seen, if a symbol appears first in a list expression, as with the \texttt{+} in \texttt{(+ 2 2)}, the symbol is
+evaluated for its function slot. If the first element of an expression is a symbol which indeed
+does contain a function in its function slot, then any symbol which appears anywhere else
+(i.e. in the rest) of the expression is taken as a variable, and it is evaluated for its global or
+local value, depending on its scope. More on variables and scope later.
+
+As noted in Section 3.1.3, if you want a literal symbol itself, one way to achieve this is
+to ``quote'' the symbol name:
+
+\begin{verbatim}
+'a
+\end{verbatim}
+
+Another way is for the symbol to appear within a quoted list expression:
+
+\begin{verbatim}
+'(a b c)
+
+'(a (b c) d)
+\end{verbatim}
+
+Note that the quote (\texttt{'}) applies across everything in the list expression, including any subexpressions.
+
+\subsubsection{Lists}
+
+Lisp takes its name from its strong support for the list data structure. The list concept
+is important to CL for more than this reason alone --- lists are important because all CL
+programs themselves are lists! Having the list as a native data structure, as well as the form
+of all programs, means that it is especially straightforward for CL programs to compute
+and generate other CL programs. Likewise, CL programs can read and manipulate other
+CL programs in a natural manner. This cannot be said of most other languages, and is one
+of the primary distinguishing characteristics of CL.
+
+Textually, a list is defined as zero or more elements surrounded by parentheses. The
+elements can be objects of any valid CL data types, such as numbers, strings, symbols, lists,
+or other kinds of objects. As we have seen, you must quote a literal list to evaluate it or
+CL will assume you are calling a function.
+
+Now look at the following list:
+
+\begin{verbatim}
+(defun hello () (write-string "Hello, World!"))
+\end{verbatim}
+
+This list also happens to be a valid CL program (function definition, in this case). Don't
+worry about analyzing the function right now, but do take a few moments to convince
+yourself that it meets the requirements for a list. What are the types of the elements in
+this list?
+
+In addition to using the quote (\texttt{'}) to produce a literal list, another way to produce a
+list is to call the function \texttt{list}. The function \texttt{list} takes any number of arguments, and
+returns a list made up from the result of evaluating each argument (as with all functions,
+the arguments to the \texttt{list} function get evaluated, from left to right, before being passed
+into the function). For example,
+
+\begin{verbatim}
+(list 'a 'b (+ 2 2))
+\end{verbatim}
+
+will return the list \texttt{(A B 4)}. The two quoted symbols evaluate to symbols, and the function
+call \texttt{(+ 2 2)} evaluates to the number 4.
+
+\subsection{Functions}
+
+Functions form the basic building block of CL. Here we will give a brief overview of how to
+define a function; later we will go into more detail on what a function actually is.
+
+A common way to define named functions in CL is with the macro \texttt{defun}\index{defun@\texttt{defun}}, which stands
+for DEFinition of a FUNction. \texttt{Defun} takes as its arguments a symbol, an argument list,
+and a body:
+
+\begin{verbatim}
+(defun my-first-lisp-function ()
+  (list 'hello 'world))
+\end{verbatim}
+
+Because \texttt{defun} is a macro, rather than a function, it does not follow the hard-and-fast rule
+that all its arguments are evaluated as expressions --- specifically, the symbol which names
+the function does not have to be quoted, nor does the argument list. These are taken as a
+literal symbol and a literal list, respectively.
+
+Once the function has been defined with \texttt{defun}, you can call it just as you would call
+any other function, by wrapping it in parentheses together with its arguments:
+
+\begin{verbatim}
+CL-USER(56): (my-first-lisp-function)
+(HELLO WORLD)
+CL-USER(57): (defun square(x)
+               (* x x))
+SQUARE
+CL-USER(58): (square 4)
+16
+\end{verbatim}
+
+Declaring the types of the arguments to a function is not required.
+
+\subsection{Global and Local Variables}
+
+\subsubsection{Global Variables}
+
+Global variables in CL are usually also known as special variables. They can be established
+by calling \texttt{defparameter}\index{defparameter@\texttt{defparameter}} or \texttt{defvar}\index{defvar@\texttt{defvar}} from the read-eval-print loop, or from within a file that
+you compile and load into CL:
+
+\begin{verbatim}
+(defparameter *todays-temp* 90)
+
+(defvar *todays-humidity* 70)
+\end{verbatim}
+
+The surrounding asterisks on these symbol names are part of the symbol names themselves,
+and have no significance to CL. This is simply a long-standing naming convention for global
+variables (i.e. parameters), to make them easy to pick out with the human eye.
+
+\texttt{Defvar} and \texttt{defparameter} differ in one important way: if \texttt{defvar} is evaluated with
+a symbol which already has a global value, it will not overwrite it with a new value.
+\texttt{Defparameter}, on the other hand, will overwrite it with a new value:
+
+\begin{verbatim}
+CL-USER(4): *todays-temp*
+90
+CL-USER(5): *todays-humidity*
+70
+CL-USER(6): (defparameter *todays-temp* 100)
+*TODAYS-TEMP*
+CL-USER(7): (defvar *todays-humidity* 50)
+*TODAYS-HUMIDITY*
+CL-USER(8): *todays-temp*
+100
+CL-USER(9): *todays-humidity*
+70
+\end{verbatim}
+
+\texttt{*todays-humidity*} did not change because we used \texttt{defvar}, and it already had a previous
+value.
+
+The value for any Parameter can always be changed from the toplevel with \texttt{setq}\index{setq@\texttt{setq}}:
+
+\begin{verbatim}
+CL-USER(11): (setq *todays-humidity* 30)
+30
+CL-USER(12): *todays-humidity*
+30
+\end{verbatim}
+
+Although \texttt{setq} will work with new variables, stylistically it should only be used with alreadyestablished variables.
+
+During application development, it often makes sense to use \texttt{defvar} rather than \texttt{defparameter}
+for variables whose values might change during the running and testing of the program. This
+way, you will not unintentionally reset the value of a parameter if you compile and load the
+source file where it is defined.
+
+\subsubsection{Local Variables}
+
+New local variables can be introduced with the macro \texttt{let}\index{let@\texttt{let}}:
+
+\begin{verbatim}
+CL-USER(13): (let ((a 20)
+                   (b 30))
+               (+ a b))
+50
+\end{verbatim}
+
+As seen in the above example, \texttt{let} takes an assignment section and a body. \texttt{Let} is a macro,
+rather than a function\footnote{See Section 3.8.5 for a discussion of how to recognize macros and functions}, so it does not follow the hard-and-fast rule that all its arguments
+are evaluated. Specifically, the assignment section
+
+\begin{verbatim}
+((a 20)
+ (b 30))
+\end{verbatim}
+
+is not evaluated (actually, the macro has the effect of transforming this into something else
+before the CL evaluator even sees it). Because this assignment section is not evaluated by
+the \texttt{let} macro, it does not have to be quoted, like a list which is an argument to a function
+would have to be. As you can see, the assignment section is a list of lists, where each
+internal list is a pair whose first is a symbol, and whose second is a value (which will be
+evaluated). These symbols (\texttt{a} and \texttt{b}) are the local variables, and they are assigned to the
+respective values.
+
+The body consists of any number of expressions which come after the assignment section
+and before the closing parenthesis of the \texttt{let} statement. The expressions in this body are
+evaluated normally, and of course any expression can refer to the value of any of the local
+variables simply by referring directly to its symbol. If the body consists of more than one
+expression, the final return-value of the body is the return-value of its last expression.
+
+New Local variables in CL are said to have lexical scope\index{lexical scope}, which means that they are
+only accessible in the code which is textually contained within the body of the \texttt{let}. The
+term lexical is derived from the fact that the behavior of these variables can be determined
+simply by reading the text of the source code, and is not affected by what happens during
+the program's execution.
+
+Dynamic scope happens when you basically mix the concept of global parameters and
+local \texttt{let} variables. That is, if you use the name of a previously established parameter
+inside the assignment section of a \texttt{let}, like this:
+
+\begin{verbatim}
+(let ((*todays-humidity* 50))
+  (do-something))
+\end{verbatim}
+
+the parameter will have the specified value not only textually within the the body of the
+\texttt{let}, but also in any functions which may get called from within the body of the \texttt{let}. The
+global value of the parameter in any other contexts will not be affected. Because this scoping
+behavior is determined by the runtime ``dynamic'' execution of the program, we refer to it
+as dynamic scope\index{dynamic scope}.
+
+Dynamic scope is often used for changing the value of a particular global parameter
+only within a particular tree of function calls. Using Dynamic scope, you can accomplish
+this without affecting other places in the program which may be referring to the parameter.
+Also, you do not have to remember to have your code ``reset'' the parameter back to a
+default global value, since it will automatically ``bounce'' back to its normal global value.
+
+Dynamic scoping capability is especially useful in a multithreaded CL, i.e., a CL process
+which can have many (virtually) simultaneous threads of execution. A parameter can take
+on a dynamically scoped value in one thread, without affecting the value of the parameter
+in any of the other concurrently running threads.
+
+\section{The List as a Data Structure}
+
+In this section we will present some of the fundamental native CL operators for manipulating
+lists as data structures. These include operators for doing things such as:
+
+\begin{enumerate}
+\item finding the length of a list
+\item accessing particular members of a list
+\item appending multiple lists together to make a new list
+\item extracting elements from a list to make a new list
+\end{enumerate}
+
+\subsection{Accessing the Elements of a List}
+
+Common Lisp defines the accessor functions \texttt{first} through \texttt{tenth} as a means of accessing
+the first ten elements in a list:
+
+\begin{verbatim}
+CL-USER(5): (first '(a b c))
+A
+CL-USER(6): (second '(a b c))
+B
+CL-USER(7): (third '(a b c))
+C
+\end{verbatim}
+
+For accessing elements in an arbitrary position in the list, you can use the function \texttt{nth},
+which takes an integer and a list as its two arguments:
+
+\begin{verbatim}
+CL-USER(8): (nth 0 '(a b c))
+A
+CL-USER(9): (nth 1 '(a b c))
+B
+CL-USER(10): (nth 2 '(a b c))
+C
+CL-USER(11): (nth 12 '(a b c d e f g h i j k l m n o p))
+M
+\end{verbatim}
+
+Note that \texttt{nth} starts its indexing at zero (0), so \texttt{(nth 0 ...)} is equivalent to \texttt{(first ...)},
+and \texttt{(nth 1 ...)} is equivalent to \texttt{(second ...)}, etc.
+
+\subsection{The ``Rest'' of the Story}
+
+A very common operation in CL is to perform some operation on the first of a list, then
+perform the same operation on each first of the rest of the list, repeating the procedure
+until the end of the list, i.e. the Empty list, is reached. The function \texttt{rest} is very helpful
+in such cases:
+
+\begin{verbatim}
+CL-USER(59): (rest '(a b c))
+(B C)
+\end{verbatim}
+
+As you can see from this example, \texttt{rest} returns a list consisting of all but the first of its
+argument.
+
+\subsection{The Empty List}
+
+The symbol NIL is defined by Common Lisp to be equivalent to the Empty List, \texttt{()}. NIL
+also has the interesting property that its value is itself, which means that it will always
+evaluate to itself, whether or not it is quoted. So NIL, 'NIL, and \texttt{()} all evaluate to the
+Empty List, whose default printed representation is NIL:
+
+\begin{verbatim}
+CL-USER(14): nil
+NIL
+CL-USER(15): 'nil
+NIL
+CL-USER(16): ()
+NIL
+\end{verbatim}
+
+The function \texttt{null}\index{null@\texttt{null}} can be used to test whether or not something is the Empty List:
+
+\begin{verbatim}
+CL-USER(17): (null '(a b c))
+NIL
+CL-USER(18): (null nil)
+T
+CL-USER(19): (null ())
+T
+\end{verbatim}
+
+As you may have deduced from the above examples, the symbol T is CL's default representation for ``true.'' As with NIL, T evaluates to itself.
+
+\subsection{Are You a List?}
+
+To test whether or not a particular object is a list, CL provides the function \texttt{listp}. Like
+many other functions which end with the letter ``p,'' this function takes a single argument
+and checks whether it meets certain criteria (in this case, whether it qualifies as a list).
+These predicate functions ending in the letter ``p'' will always return either T or NIL:
+
+\begin{verbatim}
+CL-USER(20): (listp '(pontiac cadillac chevrolet))
+T
+CL-USER(21): (listp 99)
+NIL
+CL-USER(22): (listp nil)
+T
+\end{verbatim}
+
+Note that \texttt{(listp nil)} returns T, since NIL is indeed a list (albeit the empty one).
+
+\subsection{The conditional If}
+
+Before continuing with a number of other basic list functions, we will cover the macro \texttt{if}\index{if@\texttt{if}},
+which allows simple conditionals. \texttt{If} takes three arguments, a test-form, a then-form, and
+an else-form. When an \texttt{if} form is evaluated, it first evaluates its test-form. If the form
+returns non-NIL, it will evaluate the then-form, else it will evaluate the else-form. The
+nesting of multiple \texttt{if} expressions is possible, but not advised; later we will cover other
+constructs which are more appropriate for such cases.
+
+Here are some simple examples using the \texttt{if} operator:
+
+\begin{verbatim}
+CL-USER(2): (if (> 3 4)
+                "yes"
+                "no")
+"no"
+CL-USER(3): (if (listp '("Chicago" "Detroit" "Toronto"))
+                "it is a list"
+                "it ain't a list")
+"it is a list"
+CL-USER(4): (if (listp 99)
+                "it is a list"
+                "it ain't a list")
+"it ain't a list"
+\end{verbatim}
+
+\subsection{Length of a List}
+
+Normally you can use the function \texttt{length} to get the number of elements in a list as an
+integer:
+
+\begin{verbatim}
+CL-USER(5): (length '(gm ford chrysler volkswagen))
+4
+CL-USER(6): (length nil)
+0
+\end{verbatim}
+
+The \texttt{length} function, as with most of Common Lisp, can itself be implemented in CL. Here
+is a simplified version of an \texttt{our-length} function which illustrates how \texttt{length} might be
+implemented:
+
+\begin{verbatim}
+(defun our-length (list)
+  (if (null list)
+      0
+      (+ (our-length (rest list)) 1)))
+\end{verbatim}
+
+Note that the function uses the symbol \texttt{list} to name its argument, which is perfectly valid
+as we discussed in section 3.1.4.
+
+In English, this function says basically: ``If the list is empty, its length is zero. Otherwise
+its length is one greater than the length of its rest.'' As with many functions which operate
+on lists, this recursive definition is a natural way to express the length operation.
+
+\subsection{Member of a List}
+
+The \texttt{member}\index{member@\texttt{member}} function will help you to determine whether a particular item is an element of
+a particular list. Like many similar functions, \texttt{member} uses \texttt{eql}\index{eql@\texttt{eql}} to test for equality, which is
+one of the most basic equality functions in CL (see Section 3.8.4 for a discussion of equality
+in CL). \texttt{Eql} basically means the two objects must be the same symbol, integer, or actual
+object (i.e. the same address in memory).
+
+\texttt{Member} takes two arguments: an item and a list. If the item is not in the list, it returns
+NIL. Otherwise, it returns the rest of the list, starting from the found element:
+
+\begin{verbatim}
+CL-USER(7): (member 'dallas '(boston san-francisco portland))
+NIL
+CL-USER(8): (member 'san-francisco '(boston san-francisco portland))
+(SAN-FRANCISCO PORTLAND)
+\end{verbatim}
+
+As with \texttt{length}, we could define \texttt{member} using a function definition which is very close to
+the English description of what the function is supposed to do\footnote{The use of the ``nested'' \texttt{if} statement in this example, while functionally correct, is a violation of good
+CL style. Later we will learn how to avoid nested \texttt{if} statements.}:
+
+\begin{verbatim}
+(defun our-member (elem list)
+  (if (null list)
+      nil
+      (if (eql elem (first list))
+          list
+          (our-member elem (rest list)))))
+\end{verbatim}
+
+In English, you might read this function to say ``If the list is empty, return NIL. Otherwise,
+if the desired item is the same as the first of the list, return the entire list. Otherwise, do
+the same thing on the rest of the list.''
+
+Note that, for the purposes of any kind of logical operators, returning any non-NIL value
+is ``as good as'' returning T. So the possible return-values of the \texttt{member} function are as good
+as returning T or NIL as far as any logical operators are concerned.
+
+\subsection{Getting Part of a List}
+
+\texttt{Subseq} is a common function to use for returning a portion of a list (or actually any type
+of Sequence). \texttt{Subseq} takes at least two arguments, a list and an integer indicating the
+position to start from. It also takes an optional third argument, an integer indicating the
+position to stop. Note that the position indicated by this third argument is not included in
+the returned sub-list:
+
+\begin{verbatim}
+CL-USER(9): (subseq '(a b c d) 1 3)
+(B C)
+CL-USER(10): (subseq '(a b c d) 1 2)
+(B)
+CL-USER(11): (subseq '(a b c d) 1)
+(B C D)
+\end{verbatim}
+
+Note also that the optional third argument in effect defaults to the length of the list.
+
+\subsection{Appending Lists}
+
+The function \texttt{append}\index{append@\texttt{append}} takes any number of lists, and returns a new list which results from
+appending them together. Like many CL functions, \texttt{append} does not side-effect, that is, it
+simply returns a new list as a return-value, but does not modify its arguments in any way:
+
+\begin{verbatim}
+CL-USER(6): (setq my-slides '(introduction welcome lists functions))
+(INTRODUCTION WELCOME LISTS FUNCTIONS)
+CL-USER(7): (append my-slides '(numbers))
+(INTRODUCTION WELCOME LISTS FUNCTIONS NUMBERS)
+CL-USER(8): my-slides
+(INTRODUCTION WELCOME LISTS FUNCTIONS)
+CL-USER(9): (setq my-slides (append my-slides '(numbers)))
+(INTRODUCTION WELCOME LISTS FUNCTIONS NUMBERS)
+CL-USER(10): my-slides
+(INTRODUCTION WELCOME LISTS FUNCTIONS NUMBERS)
+\end{verbatim}
+
+Note that the simple call to \texttt{append} does not affect the variable \texttt{my-slides}. If we wish
+to modify the value of this variable, however, one way to do this is by using \texttt{setq} in
+combination with the call to \texttt{append}. Note also the use of \texttt{setq} directly at the toplevel with
+a new variable name. For testing and ``hacking'' at the command prompt, this is acceptable,
+but in a finished program all such global variables should really be formally declared with
+\texttt{defparameter} or \texttt{defvar}.
+
+\subsection{Adding Elements to a List}
+
+To add a single element to the front of a list, you can use the function \texttt{cons}\index{cons@\texttt{cons}}:
+
+\begin{verbatim}
+CL-USER(13): (cons 'a '(b c d))
+(A B C D)
+\end{verbatim}
+
+\texttt{Cons} is actually the low-level primitive function upon which many of the other list-constructing
+functions are built. As you may have guessed, ``cons'' stands for ``CONStruct,'' as in ``construct a list.'' When you read or hear people talking about a CL program doing a lot of
+``consing\index{consing},'' they are referring to the program's behavior of building a lot of list structures,
+many of which are transitory and will need to be ``freed up'' by the automatic memory
+management subsystem, or ``garbage collector.''
+
+As with \texttt{append}, \texttt{cons} is non-destructive, meaning it does no side-effecting (modification)
+to its arguments.
+
+\subsection{Removing Elements from a List}
+
+The function \texttt{remove}\index{remove@\texttt{remove}} takes two arguments, any item and a list, and returns a new list with
+all occurences of the item taken out of it:
+
+\begin{verbatim}
+CL-USER(15): (setq data '(1 2 3 1000 4))
+(1 2 3 1000 4)
+CL-USER(16): (remove 1000 data)
+(1 2 3 4)
+CL-USER(17): data
+(1 2 3 1000 4)
+CL-USER(18): (setq data (remove 1000 data))
+(1 2 3 4)
+CL-USER(19): data
+(1 2 3 4)
+\end{verbatim}
+
+Like \texttt{append} and \texttt{cons}, \texttt{remove} is non-destructive and so does not modify its arguments. As
+before, one way to achieve modification with variables is to use \texttt{setq}.
+
+\subsection{Sorting Lists}
+
+The function \texttt{sort}\index{sort@\texttt{sort}} will sort any sequence (including, of course, a list), based on comparing
+the elements of the sequence using any applicable comparison function, or predicate function.
+Because of efficiency reasons, the designers of CL made the decision to allow \texttt{sort} to modify
+(``recycle'' the memory in) its sequence argument --- so you must always ``catch'' the result
+of the sorting by doing something explicitly with the return-value:
+
+\begin{verbatim}
+CL-USER(20): (setq data '(1 3 5 7 2 4 6))
+(1 3 5 7 2 4 6)
+CL-USER(21): (setq data (sort data #'<))
+(1 2 3 4 5 6 7)
+CL-USER(22): (setq data (sort data #'>))
+(7 6 5 4 3 2 1)
+\end{verbatim}
+
+Notice that the comparison function must be a function which can take two arguments ---
+any representative two elements in the given sequence --- and compare them to give a T or
+NIL result. The ``\texttt{\#'}'' notation is a shorthand way of retrieving the actual function object
+associated with a symbol or expression (in this case, the \texttt{<} or \texttt{>} symbol). We will cover more
+on this in Section 3.4.
+
+In the above examples, we simply reset the value of the variable \texttt{data} to the result of
+the \texttt{sort}, which is a common thing to do. If one wanted to retain the original pre-sorted
+sequence, a ``safe'' version of \texttt{sort} could be defined as follows:
+
+\begin{verbatim}
+(defun safe-sort (list predicate)
+  (let ((new-list (copy-list list)))
+    (sort new-list predicate)))
+\end{verbatim}
+
+\subsection{Treating a List as a Set}
+
+The functions \texttt{union}, \texttt{intersection}, and \texttt{set-difference} take two lists and compute the
+corresponding set operation. Because mathematical sets have no notion of ordering, the
+order of the results returned by these functions is purely arbitrary, so you should never
+depend on the results of these set operations being in any particular order:
+
+\begin{verbatim}
+CL-USER(23): (union '(1 2 3) '(2 3 4))
+(1 2 3 4)
+CL-USER(25): (intersection '(1 2 3) '(2 3 4))
+(3 2)
+CL-USER(26): (set-difference '(1 2 3 4) '(2 3))
+(4 1)
+\end{verbatim}
+
+\subsection{Mapping a Function to a List}
+
+If you have one list, and desire another list of the same length, there is a good chance that
+you can use one of the mapping functions. \texttt{Mapcar} is the most common of such functions.
+\texttt{Mapcar} takes a function and one or more lists, and maps the function across each element
+of the list, producing a new resulting list. The term \texttt{car}\index{car@\texttt{car}} comes from the original way in
+Lisp of referring to the first of a list (``contents of address register''). Therefore \texttt{mapcar}\index{mapcar@\texttt{mapcar}}
+takes its function and applies it to the first of each successive rest of the list:
+
+\begin{verbatim}
+CL-USER(29): (defun twice (num)
+               (* num 2))
+TWICE
+CL-USER(30): (mapcar #'twice '(1 2 3 4))
+(2 4 6 8)
+\end{verbatim}
+
+``Lambda'' (unnamed) functions are used very frequently with \texttt{mapcar} and similar mapping
+functions. More on this in Section 3.4.3.
+
+\subsection{Property Lists}
+
+Property lists (``plists'') provide a simple yet powerful way to handle keyword-value pairs.
+A plist is simply a list, with an even number of elements, where each pair of elements
+represents a named value. Here is an example of a plist:
+
+\begin{verbatim}
+(:michigan "Lansing" :illinois "Springfield"
+ :pennsylvania "Harrisburg")
+\end{verbatim}
+
+In this plist, the keys are keyword symbols, and the values are strings. The keys in a plist
+are very often keyword symbols. keyword symbols are symbols whose names are preceded by
+a colon (:), and which are generally used just for matching the symbol itself (i.e. typically
+they are not used for their symbol-value or symbol-function).
+
+For accessing members of a plist, CL provides the function \texttt{getf}, which takes a plist
+and a Key:
+
+\begin{verbatim}
+CL-USER(34): (getf '(:michigan "Lansing"
+                     :illinois "Springfield"
+                     :pennsylvania "Harrisburg")
+                   :illinois)
+"Springfield"
+\end{verbatim}
+
+\section{Control of Execution}
+
+``Control of execution'' in CL boils down to ``control of evaluation.'' Using some standard
+and common macros, you control which forms get evaluated, among certain choices.
+
+\subsection{If}
+
+Perhaps the most basic operator for imposing control is the \texttt{if} operator, which we have
+already introduced briefly in Section 3.2.5. The \texttt{If} operator takes exactly three arguments,
+each of which is an expression which may be evaluated. The first is a test-form, the second
+is a then-form, and the third is an else-form (which may be left out for a default of NIL).
+When CL evaluates the \texttt{if} form, it will first evaluate the test-form. Depending on whether
+the return-value of the test-form is non-NIL or NIL, either the then-form or the else-form
+will be evaluated.
+
+If you want to group multiple expressions together to occur as part of the then-form or
+the else-form, you must wrap them in an enclosing block. \texttt{Progn} is commonly used for this
+purpose. \texttt{Progn} will accept any number of forms as arguments, and will evaluate each of
+them in turn, finally returning the return-value of the last of them (see Figure 3.1).
+
+\begin{figure}[h]
+\begin{verbatim}
+(if (eql status :all-systems-go)
+    (progn (broadcast-countdown) (flash-colored-lights)
+           (play-eerie-music)(launch-rocket))
+    (progn (broadcast-apology) (shut-down-rocket)))
+\end{verbatim}
+\caption{Progn used with If}
+\label{fig:progn-if}
+\end{figure}
+
+\subsection{When}
+
+In some ways, \texttt{when}\index{when@\texttt{when}} is similar to \texttt{if}, but you should use \texttt{when} in cases where you know that
+the else-clause is simply NIL. This turns out to be a common situation. Another advantage
+of using \texttt{when} in these cases is that there is no need for \texttt{progn} to group multiple forms ---
+\texttt{when} simply takes a Test-form then any number of ``Then-forms:''
+
+\begin{verbatim}
+CL-USER(36): (when (eql database-connection :active)
+               (read-record-from-database)
+               (chew-on-data-from-database)
+               (calculate-final-result))
+999
+CL-USER(37): (when (> 3 4)
+               (princ "I don't think so..."))
+NIL
+\end{verbatim}
+
+(Note that the database functions above are examples only and are not pre-defined in CL).
+
+\subsection{Logical Operators}
+
+The Logical Operators \texttt{and}\index{and@\texttt{and}} and \texttt{or}\index{or@\texttt{or}} evaluate one or more expressions given as arguments,
+depending on the return-values of the expressions. As we covered in Section 3.2.3, T is
+CL's default representation for ``True,'' NIL (equivalent to the Empty List) is CL's default
+representation for ``False,'' and any non-NIL value is ``as good as'' T as far as ``Truth'' is
+concerned:
+
+\begin{verbatim}
+CL-USER(38): (and (listp '(chicago detroit boston new-york))
+                  (listp 3.1415))
+NIL
+CL-USER(39): (or (listp '(chicago detroit boston new-york))
+                 (listp 3.1415))
+T
+\end{verbatim}
+
+In fact what is happening here is that the operator \texttt{and} evaluates its arguments (expressions)
+one at a time, from left to right, returning NIL as soon as it finds one which returns NIL ---
+otherwise it will return the value of its last expression. \texttt{Or} evaluates its arguments until it
+finds one which returns non-NIL, and returning that non-NIL return-value if it finds one.
+Otherwise it will end up returning NIL.
+
+\texttt{Not} takes a single expression as an argument and negates it --- that is, if the expression returns NIL, \texttt{not}\index{not@\texttt{not}} will return T, and if the argument returns non-NIL, \texttt{not} will return
+NIL. Logically, \texttt{not} behaves identically with the function \texttt{null} --- but semantically, \texttt{null}
+carries the meaning of ``testing for an Empty List,'' while \texttt{not} carries the meaning of logical
+negation:
+
+\begin{verbatim}
+CL-USER(45): (not NIL)
+T
+CL-USER(46): (not (listp 3.1415))
+T
+\end{verbatim}
+
+\subsection{Cond}
+
+Because the use of ``nested'' \texttt{if} statements is not appropriate, CL provides the macro \texttt{cond}\index{cond@\texttt{cond}} to
+accomodate this. Use \texttt{cond} in situations when in other languages you might use a repeated
+``If...then...else if...else if...else if...'' \texttt{Cond} takes as arguments any number of test-expression
+forms. Each of these forms consists of a list whose first is an expression to be evaluated,
+and whose rest is any number of expressions which will be evaluated if the first form
+evaluates to non-NIL. As soon as a non-NIL form is found, its corresponding expressions
+are evaluated and the entire \texttt{cond} is finished (i.e. there is no need for an explicit ``break''
+statement or anything of that nature):
+
+\begin{verbatim}
+CL-USER(49): (let ((n 4))
+               (cond ((> n 10) "It's a lot")
+                     ((= n 10) "It's kind of a lot")
+                     ((< n 10) "It's not a lot")))
+"It's not a lot"
+\end{verbatim}
+
+Because T as an expression simply evaluates to itself, a convenient way to specify a ``default''
+or ``catch-all'' clause in a \texttt{cond} is to use T as the final conditional expression:
+
+\begin{verbatim}
+CL-USER(50): (let ((n 4))
+               (cond ((> n 10) "It's a lot")
+                     ((= n 10) "It's kind of a lot")
+                     (t "It's not a lot")))
+"It's not a lot"
+\end{verbatim}
+
+\subsection{Case}
+
+If you want to make a decision based on comparing a variable against a known set of
+constant values, \texttt{case}\index{case@\texttt{case}} is often more concise than \texttt{cond}:
+
+\begin{verbatim}
+CL-USER(51): (let ((color :red))
+               (case color
+                 (:blue "Blue is okay")
+                 (:red "Red is actually her favorite color")
+                 (:green "Are you nuts?")))
+"Red is actually her favorite color"
+\end{verbatim}
+
+Note that \texttt{case} uses \texttt{eql} to do its matching, so it will only work with constants which are
+symbols (including keyword symbols), integers, etc. It will not work with strings.
+
+CL also provides the macros \texttt{ecase}\index{ecase@\texttt{ecase}} and \texttt{ccase}\index{ccase@\texttt{ccase}}, which work just like \texttt{case} but provide
+some automatic error-handling for you in cases when the given value does not match any
+of the keys.
+
+The symbol \texttt{otherwise} has special meaning to the \texttt{case} macro --- it indicates a ``default,''
+or ``catch-all'' case:
+
+\begin{verbatim}
+CL-USER(52): (let ((color :orange))
+               (case color
+                 (:blue "Blue is okay")
+                 (:red "Red is actually her favorite color")
+                 (:green "Are you nuts?")
+                 (otherwise "We have never heard of that!")))
+"We have never heard of that!"
+\end{verbatim}
+
+\subsection{Iteration}
+
+In addition to its innate abilities to do recursion and mapping, CL provides several operators for doing traditional iteration (``looping''). These include macros such as \texttt{do}\index{do@\texttt{do}}, \texttt{dolist}\index{dolist@\texttt{dolist}},
+\texttt{dotimes}\index{dotimes@\texttt{dotimes}}, and the ``everything-including-the-kitchen-sink'' iterating macro, \texttt{loop}. \texttt{Dolist}
+and \texttt{dotimes} are two of the most commonly used ones, so we will cover them here:
+
+\begin{verbatim}
+CL-USER(53): (let ((result 0))
+               (dolist (elem '(4 5 6 7) result)
+                 (setq result (+ result elem))))
+22
+\end{verbatim}
+
+As seen above, \texttt{dolist} takes an initialization-list and a body. The Initialization-list consists
+of an iterator-variable, a list-form, and an optional return-value-form (which defaults to
+NIL). The body will be evaluated once with the iterator-variable set to each element in the
+list which is returned by the list-form. When the list has been exhausted, the return-valueform will be evaluated and this value will be returned from the entire \texttt{dolist}. In other
+words, the number of iterations of a \texttt{dolist} is driven by the length of the list returned by
+its list-form.
+
+\texttt{Dotimes} is similar in many ways to \texttt{dolist}, but instead of a list-form, it takes an
+expression which should evaluate to an integer. The body is evaluated once with the iteratorvariable set to each integer starting from zero (0) up to one less than the value of the
+Integer-form:
+
+\begin{verbatim}
+CL-USER(54): (let ((result 1))
+               (dotimes (n 10 result)
+                 (setq result (+ result n))))
+46
+\end{verbatim}
+
+In situations when you want the program to exit early from an iteration, you can usually
+accomplish this by calling \texttt{return} explicitly.
+
+\section{Functions as Objects}
+
+\subsection{Named Functions}
+
+When working with CL, it is important to understand that a function is actually a kind
+of object, separate from any symbol or symbol-name with which it might be associated.
+You can access the actual function-object in a symbol's function-slot by calling the function
+\texttt{symbol-function} on a symbol, like this:
+
+\begin{verbatim}
+(symbol-function '+)
+#<Function +>
+\end{verbatim}
+
+or this:
+
+\begin{verbatim}
+(symbol-function 'list)
+#<Function LIST>
+\end{verbatim}
+
+As you can see, the printed representation of a named function-object contains the function's
+symbol-name enclosed in pointy brackets, preceded by a pound sign.
+
+You can explicitly call a function-object with the function \texttt{funcall}:
+
+\begin{verbatim}
+CL-USER(10): (funcall (symbol-function '+) 1 2)
+3
+CL-USER(11): (setq my-function (symbol-function '+))
+#<Function +>
+CL-USER(12): (funcall my-function 1 2)
+3
+\end{verbatim}
+
+A shorthand way of writing \texttt{symbol-function} is to write \texttt{\#'} before the name of a function:
+
+\begin{verbatim}
+CL-USER(10): (funcall #'+ 1 2)
+3
+CL-USER(11): (setq my-function #'+)
+#<Function +>
+CL-USER(12): (funcall my-function 1 2)
+3
+\end{verbatim}
+
+\subsection{Functional Arguments}
+
+Functional arguments are arguments to functions which themselves are function-objects.
+We have seen this already with \texttt{mapcar}, \texttt{sort}, and \texttt{funcall}:
+
+\begin{verbatim}
+CL-USER(13): (defun add-3 (num)
+               (+ num 3))
+ADD-3
+CL-USER(14): (symbol-function 'add-3)
+#<Interpreted Function ADD-3>
+CL-USER(15): (mapcar #'add-3 '(2 3 4))
+(5 6 7)
+CL-USER(17): (funcall #'add-3 2)
+5
+\end{verbatim}
+
+The idea of passing functions around to other functions is sometimes referred to as higher-order
+functions. CL provides natural support for this concept.
+
+\subsection{Anonymous Functions}
+
+Sometimes a function will be used so seldom that it is hardly worth going to the extent
+of creating Named function with \texttt{defun}. For these cases, CL provides the concept of the
+\texttt{lambda}\index{lambda@\texttt{lambda}}, or ``anonymous'' (unnamed) function. To use a lambda function, you place the
+entire function definition in the position where you normally would put just the symbol
+which names the function, identified with the special symbol \texttt{lambda}:
+
+\begin{verbatim}
+CL-USER(19): (mapcar #'(lambda(num) (+ num 3))
+                     '(2 3 4))
+(5 6 7)
+CL-USER(20): (sort '((4 "Buffy") (2 "Keiko") (1 "Judy") (3 "Aruna"))
+                   #'(lambda(x y)
+                       (< (first x) (first y))))
+((1 "Judy") (2 "Keiko") (3 "Aruna") (4 "Buffy"))
+\end{verbatim}
+
+\subsection{Optional Arguments}
+
+Optional arguments to a function must be specified after any required arguments, and are
+identified with the symbol \texttt{\&optional} in the argument list. Each optional argument can be
+either a symbol or a list containing a symbol and an expression returning a default value.
+In the case of a symbol, the default value is taken to be NIL:
+
+\begin{verbatim}
+CL-USER(23): (defun greeting-list (&optional (username "Jake"))
+               (list 'hello 'there username))
+GREETING-LIST
+CL-USER(24): (greeting-list)
+(HELLO THERE "Jake")
+CL-USER(25): (greeting-list "Joe")
+(HELLO THERE "Joe")
+\end{verbatim}
+
+\subsection{Keyword Arguments}
+
+Keyword arguments to a function are basically named optional arguments\index{optional arguments}. They are defined
+much the same as optional arguments:
+
+\begin{verbatim}
+(defun greeting-list (&key (username "Jake")
+                           (greeting "how are you?"))
+  (list 'hello 'there username greeting))
+\end{verbatim}
+
+But when you call a function with keyword arguments, you ``splice in'' what amounts to a
+plist containing keyword symbols for the names of the arguments along with their values:
+
+\begin{verbatim}
+CL-USER(27): (greeting-list :greeting "how have you been?")
+(HELLO THERE "Jake" "how have you been?")
+CL-USER(28): (greeting-list :greeting "how have you been?" :username "Joe")
+(HELLO THERE "Joe" "how have you been?")
+\end{verbatim}
+
+Note that with keyword arguments, you use a normal symbol (i.e. without the preceding
+colon) in the definition of the function, but a keyword symbol as the ``tag'' when calling
+the function. There is a logical reason behind this, which you will understand soon.
+
+\section{Input, Output, Streams, and Strings}
+
+Input and Output in CL is done through objects called streams. A stream is a source
+or destination for pieces of data which generally is connected to some physical source or
+destination, such as a terminal console window, a file on the computer's hard disk, or a web
+browser. Each thread of execution in CL defines global parameters which represent some
+standard Streams:
+
+\begin{itemize}
+\item \texttt{*standard-input*} is the default data source.
+\item \texttt{*standard-output*} is the default data destination.
+\item \texttt{*terminal-io*} is bound to the console (command prompt) window, and by default
+this is identical to both \texttt{*standard-input*} and \texttt{*standard-output*}.
+\end{itemize}
+
+\subsection{Read}
+
+\texttt{Read} is the standard mechanism for reading data items into CL. \texttt{Read} takes a single optional
+argument for its stream, and reads a single data item from that stream. The default for the
+stream is \texttt{*standard-input*}. If you simply type \texttt{(read)} at the command prompt, CL will
+wait for you to enter some valid Lisp item, and will return this item. \texttt{Read} simply reads, it
+does not evaluate, so there is no need to quote the data being read. You can set a variable
+to the result of a call to \texttt{read}\index{read@\texttt{read}}:
+
+\begin{verbatim}
+(setq myvar (read))
+\end{verbatim}
+
+The function \texttt{read-line} is similar to \texttt{read}, but will read characters until it encounters
+a new line or end-of-file, and will return these characters in the form of a string. \texttt{Read-line}
+is appropriate for reading data from files which are in a ``line-based'' format rather than
+formatted as Lisp expressions.
+
+\subsection{Print and Prin1}
+
+\texttt{Print} and \texttt{prin1} each take exactly one CL object and output its printed representation to
+a stream, which defaults to \texttt{*standard-output*}. \texttt{Print} puts a space and a newline after
+the item (effectively separating individual items with whitespace), and \texttt{Prin1} outputs the
+item with no extra whitespace:
+
+\begin{verbatim}
+CL-USER(29): (print 'hello)
+
+HELLO
+HELLO
+\end{verbatim}
+
+In the above example, you see the symbol HELLO appearing twice: the first time is the
+output actually being printed on the console, and the second is the normal return-value of
+the call to \texttt{print}\index{print@\texttt{print}} being printed on the console by the read-eval-print loop. \texttt{Print} and \texttt{Prin1}
+both print their output readably, meaning that CL's \texttt{read} function will be able to read the
+data back in. For example, the double-quotes of a string will be included in the output:
+
+\begin{verbatim}
+CL-USER(30): (print "hello")
+
+"hello"
+"hello"
+\end{verbatim}
+
+\subsection{Princ}
+
+\texttt{Princ}, as distinct from \texttt{print} and \texttt{prin1}, prints its output in more of a human-readable
+format, which means for example that the double-quotes of a string will be stripped upon
+output:
+
+\begin{verbatim}
+CL-USER(31): (princ "hello")
+hello
+"hello"
+\end{verbatim}
+
+in the above example, as before, we see the output twice: once when it is actually printed
+to the console, and again when the return-value of the call to \texttt{princ}\index{princ@\texttt{princ}} is printed by the
+read-eval-print loop.
+
+\subsection{Format}
+
+\texttt{Format} is a powerful generalization of \texttt{prin1}, \texttt{princ}, and other basic printing functions, and
+can be used for almost all output. \texttt{Format} takes a Stream, a control-string, and optionally
+any number of additional arguments to fill in placeholders in the control-string:
+
+\begin{verbatim}
+CL-USER(33): (format t "Hello There ~a" 'bob)
+Hello There BOB
+NIL
+\end{verbatim}
+
+In the above example, \texttt{t} is used as a shorthand way of specifying \texttt{*standard-output*} as the
+stream, and \texttt{\~{}a} is a control-string placeholder which processes its argument as if by \texttt{princ}.
+If you specify either an actual stream or T as the second argument to \texttt{format}\index{format@\texttt{format}}, it will print
+by side-effect and return NIL as its return-value. However, if you specify NIL as the second
+argument, \texttt{format} does not output to any stream at all by side-effect, but instead returns
+a string containing what would have been output to a stream if one had been provided:
+
+\begin{verbatim}
+CL-USER(34): (format nil "Hello There ~a" 'bob)
+"Hello There BOB"
+\end{verbatim}
+
+In addition to \texttt{\~{}a}, there is a wealth of other format directives for an extensive choice of
+output, such as outputting items as if by \texttt{prin1}, outputting lists with a certain character
+after all but the last item, outputting numbers in many different formats including Roman
+numerals and English words, etc.
+
+\subsection{Pathnames}
+
+In order to name directories and files on a computer filesystem in an operating-system
+independent manner, CL provides the pathname system. CL pathnames do not contain
+system-specific pathname strings such as the forward-slash of Unix/Linux filenames or the
+backward-slash of MSDOS/Windows filenames. A CL pathname is basically a structure
+which supports a constructor function, \texttt{make-pathname}, and several accessor functions, such
+as \texttt{pathname-name}, \texttt{pathname-directory}, and \texttt{pathname-type}. The pathname structure
+contains six slots:
+
+\begin{itemize}
+\item Directory
+\item Name
+\item Type
+\item Device
+\item Version
+\item Host
+\end{itemize}
+
+On standard Unix filesystems, only the directory, name, and type slots are relevant. On
+MSDOS/Windows filesystems, the device slot is also relevant. On the Symbolics platform,
+which has a more advanced filesystem, the version and host slots also have relevance.
+
+The constructor function, \texttt{make-pathname}, takes keyword arguments corresponding to
+the six possible slots of the pathname.
+
+The following is an example of creating a pathname which would appear on Unix as
+\texttt{/tmp/try.txt}:
+
+\begin{verbatim}
+CL-USER(15): (defparameter *my-path*
+               (make-pathname :directory (list :absolute "tmp")
+                              :name"readme"
+                              :type "txt"))
+*MY-PATH*
+CL-USER(16): *my-path*
+#p"/tmp/readme.txt"
+\end{verbatim}
+
+As seen in the above example, the \texttt{:directory} slot is technically a list, whose first is
+a keyword symbol (either \texttt{:absolute} or \texttt{:relative}), and whose rest is the individual
+directory components represented as strings.
+
+\subsection{File Input and Output}
+
+Doing file input and output in CL is essentially a matter of combining the concepts of
+streams and pathnames. You must first open a file, which entails associating a stream
+with the file. CL does provide the \texttt{open} function, which directly opens a file and associates a stream to it. For a number of reasons, however, generally you will use a macro
+called \texttt{with-open-file} which not only opens the file, but automatically closes it when
+you are done with it, and performs additional cleanup and error-handling details for you.
+\texttt{With-open-file} takes a specification-list and a body. The specification-list consists of a
+stream-variable (a symbol) and a pathname, followed by several optional keyword arguments which specify, for example, whether the file is for input, output, or both. Here is
+an example of opening a file and reading one item from it (note that the file denoted by
+\texttt{*mypath*} must exist, or an error will be signalled. You can use the function \texttt{probe-file}
+to test for a file's existence.):
+
+\begin{verbatim}
+(with-open-file (input-stream *my-path*)
+  (read input-stream))
+\end{verbatim}
+
+No extra keyword arguments are required in the specification-list in this example, since
+``read-only'' mode is the default for opening a file. In order to write to a file, however,
+additional keyword arguments must be given:
+
+\begin{verbatim}
+(with-open-file (output-stream *my-path*
+                               :direction :output
+                               :if-exists :supersede
+                               :if-does-not-exist :create)
+  (format output-stream "Hello There"))
+\end{verbatim}
+
+\section{Hash Tables, Arrays, Structures, and Classes}
+
+CL provides several other built-in data structures to meet a wide variety of needs. Arrays
+and hash tables support the storage of values in a manner similar to lists and plists, but
+with much faster look-up speed for large data sets. Structures provide another plist-like
+construct, but more efficient and structured.
+
+Classes extend the idea of structures to provide a full object-oriented programming
+paradigm supporting multiple inheritance, and methods which can dispatch based on any
+number of specialized arguments (``multimethods''). This collection of features in CL is
+called the Common Lisp Object System\index{Common Lisp Object System}, or CLOS\index{CLOS}.
+
+\subsection{Hash Tables}
+
+A hash table is similar to what is known in some other languages as an associative array\index{associative array}. It
+is comparable to a single-dimensional array which supports keys which are any arbitrary CL
+object, which will match using \texttt{eql}, e.g. symbols or integers. Hash tables support virtually
+constant-time lookup of data, which means that the time it takes to look up an item in a
+hash table will remain stable, even as the number of entries in the hash table increases.
+
+To work with hash tables, CL provides the constructor function \texttt{make-hash-table} and
+the accessor function \texttt{gethash}. In order to set entries in a hash table, use the \texttt{setf}\index{setf@\texttt{setf}} operator
+in conjunction with the \texttt{gethash} accessor function. \texttt{Setf} is a generalization of \texttt{setq} which
+can be used with places resulting from a function call, in addition to exclusively with
+symbols as with \texttt{setq}. Here is an example of creating a hash table, putting a value in it,
+and retrieving the value from it:
+
+\begin{verbatim}
+CL-USER(35): (setq os-ratings (make-hash-table))
+#<EQL hash-table with 0 entries @ #x209cf822>
+CL-USER(36): (setf (gethash :windows os-ratings) :no-comment)
+:NO-COMMENT
+CL-USER(37): (gethash :windows os-ratings)
+:NO-COMMENT
+T
+\end{verbatim}
+
+Note that the \texttt{gethash} function returns two values. This is the first example we have
+seen of a function which returns more than one value. The first return-value is the value
+corresponding to the found entry in the hash table, if it exists. The second return-value
+is a Boolean value (i.e. T or NIL), indicating whether the value was actually found in the
+hash table. If the value is not found, the first return-value will be NIL and the second
+return-value will also be NIL. This second value is necessary to distinguish from cases when
+the entry is found in the hash table, but its value just happens to be NIL.
+
+There are several ways to access multiple return-values from a function, e.g. by using
+\texttt{multiple-value-bind} and \texttt{multiple-value-list}.
+
+\subsection{Arrays}
+
+Arrays are data structures which can hold single- or multi-dimensional ``grids'' full of values,
+which are indexed by one or more integers. Like hash tables, arrays support very fast access
+of the data based on the integer indices. You create arrays using the constructor function
+\texttt{make-array}\index{make-array@\texttt{make-array}}, and refer to elements of the Array using the accessor function \texttt{aref}\index{aref@\texttt{aref}}. As with
+hash tables, you can set individual items in the array using \texttt{setf}:
+
+\begin{verbatim}
+CL-USER(38): (setq my-array (make-array (list 3 3)))
+#2A((NIL NIL NIL) (NIL NIL NIL) (NIL NIL NIL))
+CL-USER(39): (setf (aref my-array 0 0) "Dave")
+"Dave"
+CL-USER(40): (setf (aref my-array 0 1) "John")
+"John"
+CL-USER(41): (aref my-array 0 0)
+"Dave"
+CL-USER(42): (aref my-array 0 1)
+"John"
+\end{verbatim}
+
+The \texttt{make-array} function also supports a myriad of optional keyword arguments for initializing the array at the time of creation.
+
+\subsection{Structures}
+
+Structures support creating your own data structures with named slots, similar to, for example, the pathname data structure which we have seen. Structures are defined with the macro
+\texttt{defstruct}\index{defstruct@\texttt{defstruct}}, which supports many options for setting up the instance constructor functions,
+slots, and accessor functions of the structure. For a complete treatment of structures, we
+refer you to one of the CL references or to the on-line documentation for \texttt{defstruct}.
+
+\subsection{Classes and Methods}
+
+Classes and methods form the core of the Common Lisp Object System (CLOS), and add
+full-blown object-oriented capabilities to Common Lisp.
+
+A complete treatment of CLOS is beyond the scope of this book, but we will provide
+a brief overview. Classes are basically ``blueprints'' or ``prototypes'' for objects. objects,
+in this context, are a kind of structure for grouping together both data and computational
+functionality. Methods are very similar to functions, but they can be specialized to apply
+to particular combinations of object types.
+
+CLOS is a generic function object-oriented system, which means that methods exist
+independently from classes (i.e. methods do not ``belong to'' classes). Methods can take
+different combinations of class instance types as arguments, however, and can be specialized
+based upon the particular combinations of types of their arguments. Simple CL datatypes,
+such as strings and numbers, are also considered as classes.
+
+Here is an example of defining a class and a method, making an instance of the class,
+and calling the method using the instance as the argument:
+
+\begin{verbatim}
+CL-USER(43): (defclass funbox () ((length :initform 10)
+                                  (width :initform 10)
+                                  (height :initform 10)))
+#<STANDARD-CLASS FUNBOX>
+CL-USER(44): (defmethod volume ((self funbox))
+               (* (slot-value self 'length)
+                  (slot-value self 'width)
+                  (slot-value self 'height)))
+#<STANDARD-METHOD VOLUME (FUNBOX)>
+CL-USER(45): (setq mybox (make-instance 'funbox))
+#<FUNBOX @ #x209d135a>
+CL-USER(46): (volume mybox)
+1000
+\end{verbatim}
+
+As seen in the above example, the class definition takes at least three arguments: a symbol
+identifying the name of the class, a mixin-list which names superclasses (none, in this
+example), and a list of slots for the class, with default values specified by the \texttt{:initform}
+keyword.
+
+The method definition is very much like a function definition, but its arguments (single
+argument in the case of this example) are specialized to a particular class type. When we
+call the method, we pass an instance of the class as an argument, using a normal argument
+list. This is unlike Java or C++, where a method is considered to be ``of'' a particular class
+instance, and only additional arguments are passed in an argument list.
+
+CL is more consistent in this regard.
+
+Because normal CL data types are also considered to be classes, we can define methods
+which specialize on them as well:
+
+\begin{verbatim}
+CL-USER(47): (defmethod add ((value1 string) (value2 string))
+               (concatenate 'string value1 value2))
+#<STANDARD-METHOD ADD (STRING STRING)>
+CL-USER(48): (defmethod add ((value1 number) (value2 number))
+               (+ value1 value2))
+#<STANDARD-METHOD ADD (NUMBER NUMBER)>
+CL-USER(49): (add "hello " "there")
+"hello there"
+CL-USER(50): (add 3 4)
+7
+\end{verbatim}
+
+\section{Packages}
+
+Typically, symbols in CL exist within a particular package. You can think of packages as
+``area codes'' for symbols. They are namespaces used within CL to help avoid name clashes.
+Package names are generally represented by keyword symbols (i.e. symbols whose names
+are preceded by a colon). ANSI CL has a ``flat'' package system, which means that packages
+do not ``contain'' other packages in a hierarchical fashion, but you can achieve essentially
+the same effect by ``layering'' packages. Actually, hierarchical packages have been added to
+Allegro CL\index{Allegro CL} as an extension to the ANSI Standard, and may be added to the ANSI standard
+at some point. However, the real use of hierarchical packages is to avoid name clashes with
+package names themselves. You can do this in any case simply by separating the components
+of a package name with a delimiter, for example, a dot: \texttt{:com.genworks.books}.
+
+In a given CL session, CL always has a notion of the current package which is stored
+in the (dynamic) variable \texttt{*package*}. It is important always to be aware of what the
+current package is, because if you are in a different package than you think you are, you
+can get very surprising results. For example, functions that are defined in \texttt{:package-1} will
+not necessarily be visible in \texttt{:package-2}, so if you attempt to run those functions from
+\texttt{:package-2}, CL will think they are undefined.
+
+Normally the CL command prompt prints the name of the current package. You can
+move to a different package, e.g. \texttt{foo}, with the toplevel comand \texttt{:package :foo}.
+
+Small programs can be developed in the \texttt{:user} package, but in general, a large application should be developed in its own package.
+
+\subsection{Importing and Exporting Symbols}
+
+Packages can export symbols to make them accessible from other packages, and import
+symbols to make them appear to be local to the package.
+
+If a symbol is exported from one package but not imported into the current package, it
+is still valid to refer to it. In order to refer to symbols in other packages, qualify the symbol
+with the package name and a single colon: \texttt{package-2:foo}.
+
+If a symbol is not exported from the outside package, you can still refer to it, but this
+would represent a style violation, as signified by the fact that you have to use a double-colon:
+\texttt{package-2::bar}.
+
+\subsection{The Keyword Package}
+
+We have seen many occurences of symbols whose names are preceded by a colon (\texttt{:}). These
+symbols actually reside within the \texttt{:keyword} package, and the colon is just a shorthand way
+of writing and printing them. Keyword symbols are generally used for enumerated values
+and to name (keyword) function arguments. They are ``immune'' to package (i.e. there is
+no possibility of confusion about which package they are in), which makes them especially
+convenient for these purposes.
+
+\section{Common Stumbling Blocks}
+
+This section discusses common errors and stumbling blocks that new CL users often encounter.
+
+\subsection{Quotes}
+
+One common pitfall is not understanding when to quote expressions. Quoting a single
+symbol simply returns the symbol, whereas without the quotes, the symbol is treated as a
+variable:
+
+\begin{verbatim}
+CL-USER(6): (setq x 1)
+1
+CL-USER(7): x
+1
+CL-USER(8): 'x
+X
+\end{verbatim}
+
+Quoting a list returns the list, whereas without the quotes, the list is treated as a function
+(or macro) call:
+
+\begin{verbatim}
+CL-USER(10): '(+ 1 2)
+(+ 1 2)
+CL-USER(11): (first '(+ 1 2))
++
+CL-USER(12): (+ 1 2)
+3
+CL-USER(13): (first (+ 1 2))
+Error: Attempt to take the car of 3 which is not listp.
+\end{verbatim}
+
+\subsection{Function Argument Lists}
+
+When you define a function with \texttt{defun}, the arguments go inside their own list:
+
+\begin{verbatim}
+CL-USER(19): (defun square (num)
+               (* num num))
+SQUARE
+\end{verbatim}
+
+But when you call the function, the argument list comes spliced in directly after the function
+name:
+
+\begin{verbatim}
+CL-USER(20): (square 4)
+16
+\end{verbatim}
+
+A common mistake is to put the argument list into its own list when calling the function,
+like this:
+
+\begin{verbatim}
+CL-USER(21) (square (4))
+Error: Funcall of 4 which is a non-function.
+\end{verbatim}
+
+If you are used to programming in Perl or Java, you will likely do this occasionally while
+you are getting used to CL syntax.
+
+\subsection{Symbols vs. Strings}
+
+Another point of confusion is the difference between symbols and strings. The symbol AAA
+and the string ``AAA'' are treated in completely different ways by CL. Symbols reside in
+packages; strings do not. Moreover, all references to a given symbol in a given package
+refer to the same actual address in memory --- a given symbol in a given package is only
+allocated once. In contrast, CL might allocate new memory whenever the user defines a
+string, so multiple copies of the same string of characters could occur multiple times in
+memory. Consider this example:
+
+\begin{verbatim}
+CL-USER(17): (setq a1 'aaa)
+AAA
+CL-USER(18): (setq a2 'aaa)
+AAA
+CL-USER(19): (eql a1 a2)
+T
+\end{verbatim}
+
+EQL compares actual pointers or integers --- A1 and A2 both point to the same symbol
+in the same part of memory.
+
+\begin{verbatim}
+CL-USER(20): (setq b1 "bbb")
+"bbb"
+CL-USER(21): (setq b2 "bbb")
+"bbb"
+CL-USER(22): (eql b1 b2)
+NIL
+CL-USER(23): (string-equal b1 b2)
+T
+\end{verbatim}
+
+Again, EQL compares pointers, but here B1 and B2 point to different memory addresses,
+although those addresses happen to contain the same string. Therefore the comparison by
+\texttt{string-equal}, which compares strings character-by-character, rather than the pointers to
+those strings, returns T.
+
+Another difference between symbols and strings is that CL provides a number of operations for manipulating strings that do not work for symbols:
+
+\begin{verbatim}
+CL-USER(25): (setq c "Jane dates only Lisp programmers")
+"Jane dates only Lisp programmers"
+CL-USER(26): (char c 3)
+#\e
+CL-USER(27): (char 'xyz 1)
+Error: 'XYZ' is not of the expected type 'STRING'
+CL-USER(29): (subseq c 0 4)
+"jane"
+CL-USER(30): (subseq c (position #\space c))
+" dates only lisp programmers"
+CL-USER(31): (subseq c 11 (length c))
+"only lisp programmers"
+\end{verbatim}
+
+\subsection{Equality}
+
+CL has several different predicates for testing equality. This is demanded because of the
+many different object types in CL, which dictate different notions of equality.
+
+A simple rule of thumb is:
+
+\begin{itemize}
+\item Use \texttt{eql} to compare symbols, pointers (such as pointers to lists), and integers
+\item Use \texttt{=} to compare most numeric values
+\item Use \texttt{string-equal} for case-insensitive string comparison
+\item Use \texttt{string=} for case-sensitive string comparison
+\item Use \texttt{equal}\index{equal@\texttt{equal}} to compare other types of objects (such as lists and single characters)
+\item For comparing floating-point numbers which may differ by a very small margin, but
+should still be considered equal, the safest technique is to take the absolute value
+of their difference, and compare this with an ``epsilon'' value within a tolerance of
+zero. In Figure 3.2 is a simple function which does this, which assumes that a global
+parameter is defined, \texttt{*zero-epsilon*}, as a numeric value very close to zero:
+\end{itemize}
+
+\begin{figure}[h]
+\begin{verbatim}
+(defun nearly-equal? (num1 num2 &optional (tolerance *zero-epsilon*))
+  (< (abs (- num1 num2)) tolerance))
+\end{verbatim}
+\caption{Function for Floating-point Comparison}
+\label{fig:nearly-equal}
+\end{figure}
+
+Examples:
+
+\begin{verbatim}
+CL-USER(33): (setq x :foo)
+:FOO
+CL-USER(34): (eql x :foo)
+T
+CL-USER(35): (= 100 (* 20 5))
+T
+CL-USER(36): (string-equal "xyz" "XYZ")
+T
+CL-USER(37): (setq abc '(a b c))
+(A B C)
+CL-USER(38): (equal abc (cons 'a '(b c)))
+T
+CL-USER(39): (equal #\a (char "abc" 0))
+T
+CL-USER(40): (eql abc (cons 'a '(b c)))
+NIL
+\end{verbatim}
+
+The last expression returns NIL because, although the two lists have the same contents, they
+reside in different places in memory, and therefore the pointers to those lists are different.
+
+Note that several of the functions which by default use \texttt{eql} for matching will take an
+optional keyword argument \texttt{test} which can override this default:
+
+\begin{verbatim}
+CL-USER(54): (member "blue" '("red" "blue" "green" "yellow")
+                     :test #'string-equal)
+("blue" "green" "yellow")
+\end{verbatim}
+
+Recall from Section 3.2.7 that \texttt{member} returns the rest of the list starting at the found
+element.
+
+\subsection{Distinguishing Macros from Functions}
+
+Since macros\footnote{Special Operators are one other category of operator in CL, which internally are implemented differently
+from macros, but which for our purposes we can consider like macros.} and functions both occur as the first element in an expression, at first
+glance it may appear difficult to distinguish them. In practice, this rarely becomes an issue.
+For beginners in the language, the best approach is to make a default assumption that
+something is a function unless you recognize it as a macro. Most macros will be readily
+identifiable because one of the following will apply:
+
+\begin{itemize}
+\item It is a familiar core part of CL, such as \texttt{if}, \texttt{cond}, \texttt{let}, \texttt{setq}, \texttt{setf}, etc.
+\item Its name begins with ``def,'' such as with \texttt{defun}, \texttt{defparameter}, etc.
+\item Its name begins with ``with-,'' as in \texttt{with-open-file}, \texttt{with-output-to-string}, etc.
+\item Its name begins with ``do,'' for example \texttt{dolist} and \texttt{dotimes}.
+\end{itemize}
+
+Beyond these general rules of thumb, if you find yourself in doubt about whether something is a function or a macro, you can:
+
+\begin{enumerate}
+\item Check with on-line reference documentation or in a CL reference book (see the Bibliography in Appendix B)
+
+\item Use the \texttt{symbol-function} function to ask your CL session, like this:
+
+\begin{verbatim}
+CL-USER(24): (symbol-function 'list)
+#<Function LIST>
+CL-USER(25): (symbol-function 'with-open-file)
+#<macro WITH-OPEN-FILE @ #x2000b07a>
+\end{verbatim}
+\end{enumerate}
+
+\subsection{Operations that cons}
+
+Because CL programs do not have to free and allocate memory explicitly, they can be
+written much more quickly. As an application evolves, some operations which ``cons'' can
+be replaced by operations which ``recycle'' memory, reducing the amount of work which the
+garbage collector (CL's automatic memory management subsystem) has to do.
+
+In order to write programs which conserve on garbage collecting, one technique is simply to avoid the unnecessary use of operations which cons. This ability will come with
+experience.
+
+Another technique is to use destructive operations, which are best used only after one
+has gained more experience working with CL. Destructive operations are for the most part
+beyond the scope of this book.

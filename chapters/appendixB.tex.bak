@@ -1,0 +1,184 @@
+\chapter{Bibliography}
+
+\section{Books}
+
+\subsection{Common Lisp\index{Common Lisp}: the Language, 2nd Edition}
+
+Guy L. Steele Jr., Digital Press, 1990, ISBN 1-55558-041-6
+
+This is the book which initially defined the Common Lisp standard, before it was accepted
+by ANSI. Known affectionately as ``CLtL2,'' it remains the most comprehensive reference
+for ANSI CL. An on-line HTML version is available at:
+
+\begin{center}
+\texttt{http://www.cs.cmu.edu/Groups/AI/html/cltl/cltl2.html}
+\end{center}
+
+\subsection{ANSI Common Lisp\index{ANSI Common Lisp}}
+
+Paul Graham, Prentice Hall, 1996, ISBN 0-13-370875-6
+
+This is an excellent tutorial introduction to Common Lisp, covering all the important features
+of the language in a clear and practical style. Highly recommended for beginners.
+
+\subsection{Practical Common Lisp}
+
+Peter Seibel, Apress, 2005, ISBN 1-59059-239-5
+
+A hands-on introduction to Common Lisp that focuses on practical programming techniques
+and real-world applications. Includes several complete example programs. Also available
+online at:
+
+\begin{center}
+\texttt{http://www.gigamonkeys.com/book/}
+\end{center}
+
+\subsection{Paradigms of Artificial Intelligence Programming: Case Studies in Common Lisp}
+
+Peter Norvig, Morgan Kaufmann, 1991, ISBN 1-55860-191-0
+
+Known as ``PAIP,'' this book teaches both AI programming techniques and advanced Common
+Lisp programming through the development of significant AI systems. Essential reading for
+serious Common Lisp programmers.
+
+\subsection{Object-Oriented Programming in Common Lisp: A Programmer's Guide to CLOS\index{CLOS}}
+
+Sonya E. Keene, Addison-Wesley, 1989, ISBN 0-201-17589-4
+
+The definitive guide to the Common Lisp Object System\index{Common Lisp Object System} (CLOS). Covers classes, methods,
+generic functions, and the meta-object protocol.
+
+\subsection{On Lisp: Advanced Techniques for Common Lisp}
+
+Paul Graham, Prentice Hall, 1993, ISBN 0-13-030552-9
+
+An advanced book focusing on macros and other sophisticated Common Lisp programming
+techniques. Available online at:
+
+\begin{center}
+\texttt{http://www.paulgraham.com/onlisp.html}
+\end{center}
+
+\subsection{Common Lisp Recipes}
+
+Edmund Weitz, Apress, 2016, ISBN 978-1-4842-1177-9
+
+A cookbook of Common Lisp programming solutions, covering a wide range of practical
+problems and techniques.
+
+\section{Online Resources}
+
+\subsection{Common Lisp HyperSpec}
+
+The ANSI Common Lisp specification in hypertext format, fully cross-referenced and searchable. The authoritative reference for the language:
+
+\begin{center}
+\texttt{http://www.lispworks.com/documentation/HyperSpec/}
+\end{center}
+
+\subsection{The Common Lisp Cookbook}
+
+A collaborative project providing recipes and techniques for common programming tasks in
+Common Lisp:
+
+\begin{center}
+\texttt{http://cl-cookbook.sourceforge.net/}
+\end{center}
+
+\subsection{Planet Lisp}
+
+An aggregator for Lisp-related blog posts and news:
+
+\begin{center}
+\texttt{http://planet.lisp.org/}
+\end{center}
+
+\subsection{Quicklisp}
+
+A library manager for Common Lisp, making it easy to install and manage hundreds of
+libraries:
+
+\begin{center}
+\texttt{http://www.quicklisp.org/}
+\end{center}
+
+\subsection{The Association of Lisp Users\index{Association of Lisp Users}}
+
+The ALU maintains resources for the Lisp community, including a directory of Lisp systems:
+
+\begin{center}
+\texttt{http://www.alu.org/}
+\end{center}
+
+\section{Tutorials}
+
+\subsection{Lisp Primer from Tulane University}
+
+An interactive online tutorial for beginners:
+
+\begin{center}
+\texttt{http://www.cs.tulane.edu/www/Hennessy/courses/}
+
+\texttt{cmps360/lisp\_primer.html}
+\end{center}
+
+\subsection{Common Lisp: A Gentle Introduction to Symbolic Computation}
+
+David S. Touretzky, available online:
+
+\begin{center}
+\texttt{http://www.cs.cmu.edu/\~{}dst/LispBook/}
+\end{center}
+
+\subsection{Successful Lisp}
+
+David B. Lamkins, available online:
+
+\begin{center}
+\texttt{http://successful-lisp.blogspot.com/}
+\end{center}
+
+\section{Implementation-Specific Documentation}
+
+\subsection{Allegro CL\index{Allegro CL} Documentation}
+
+Complete documentation for Franz Inc.'s Allegro Common Lisp:
+
+\begin{center}
+\texttt{http://www.franz.com/support/documentation/}
+\end{center}
+
+\subsection{SBCL Manual}
+
+Documentation for Steel Bank Common Lisp:
+
+\begin{center}
+\texttt{http://www.sbcl.org/manual/}
+\end{center}
+
+\subsection{CCL Documentation}
+
+Documentation for Clozure Common Lisp:
+
+\begin{center}
+\texttt{http://ccl.clozure.com/manual/}
+\end{center}
+
+\section{Community and Discussion}
+
+\subsection{comp.lang.lisp}
+
+The Usenet newsgroup for Lisp discussion, accessible via Google Groups or news readers.
+
+\subsection{Reddit /r/lisp}
+
+An active community for Lisp discussion:
+
+\begin{center}
+\texttt{http://www.reddit.com/r/lisp/}
+\end{center}
+
+\subsection{Lisp Discord and IRC Channels}
+
+Active real-time chat communities for Lisp programmers can be found on Discord and
+IRC (\#lisp on Libera.Chat).
