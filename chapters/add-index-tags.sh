@@ -148,3 +148,46 @@ done
 
 echo "Index entries added!"
 echo "To restore original files, use: cp *.tex.bak (original-name).tex"
+
+# Add specific index entries for terms that appear but aren't in texttt
+echo "Adding special case index entries..."
+
+# In main.tex - add indexes for the application domains list
+if ! grep -q 'bioinformatics\\index{bioinformatics}' main.tex; then
+    sed -i 's/bioinformatics,/bioinformatics\\index{bioinformatics},/' main.tex
+fi
+if ! grep -q 'data mining\\index{data mining}' main.tex; then
+    sed -i 's/data mining,/data mining\\index{data mining},/' main.tex
+fi
+if ! grep -q 'document management\\index{document management}' main.tex; then
+    sed -i 's/document management,/document management\\index{document management},/' main.tex
+fi
+if ! grep -q 'B2B\\index{B2B}' main.tex; then
+    sed -i 's/B2B,/B2B\\index{B2B},/' main.tex
+fi
+if ! grep -q 'E-commerce\\index{E-commerce}' main.tex; then
+    sed -i 's/E-commerce/E-commerce\\index{E-commerce}/' main.tex
+fi
+
+# Add CLtL2 index
+for file in chapter*.tex; do
+    if ! grep -q 'CLtL2\\index{CLtL2}' "$file"; then
+        sed -i '0,/CLtL2/{s/CLtL2/CLtL2\\index{CLtL2}/}' "$file"
+    fi
+done
+
+# Add 'comparison function' index
+for file in chapter*.tex; do
+    if ! grep -q 'comparison function\\index{comparison function}' "$file"; then
+        sed -i '0,/comparison function/{s/comparison function/comparison function\\index{comparison function}/}' "$file"
+    fi
+done
+
+# Add 'control string' index (for format)
+for file in chapter*.tex; do
+    if ! grep -q 'control string\\index{control string}' "$file"; then
+        sed -i '0,/control string/{s/control string/control string\\index{control string}/}' "$file"
+    fi
+done
+
+echo "Special case index entries complete!"

@@ -754,7 +754,7 @@ before, one way to achieve modification with variables is to use \texttt{setq}.
 \subsection{Sorting Lists}
 
 The function \texttt{sort}\index{sort@\texttt{sort}} will sort any sequence (including, of course, a list), based on comparing
-the elements of the sequence using any applicable comparison function, or predicate function.
+the elements of the sequence using any applicable comparison function\index{comparison function}, or predicate function.
 Because of efficiency reasons, the designers of CL made the decision to allow \texttt{sort} to modify
 (``recycle'' the memory in) its sequence argument --- so you must always ``catch'' the result
 of the sorting by doing something explicitly with the return-value:
