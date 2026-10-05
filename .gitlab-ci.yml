@@ -1,0 +1,32 @@
+# GitLab CI for genworks/understanding-common-lisp: build the book.
+#
+# Every push to master builds the PDF with the Makefile (LaTeX three
+# times, makeindex once) and keeps it as the job's artifact,
+# understanding-common-lisp.pdf.  The build stops on the first LaTeX
+# error, so a red pipeline means the book does not build.
+#
+# Runner: the amd64 DOCKER executor (tag "amd64-docker"); the job runs
+# inside the official TeX Live image, which has pdflatex, makeindex and
+# make, and nothing else is installed.
+
+stages:
+  - build
+
+pdf:
+  stage: build
+  image: texlive/texlive:latest-small
+  tags:
+    - amd64-docker
+  variables:
+    GIT_DEPTH: "1"
+  script:
+    - make
+    - cp main.pdf understanding-common-lisp.pdf
+  artifacts:
+    name: understanding-common-lisp
+    paths:
+      - understanding-common-lisp.pdf
+    expire_in: 1 year
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+    - if: $CI_PIPELINE_SOURCE == "web"

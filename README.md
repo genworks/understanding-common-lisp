@@ -3,6 +3,9 @@
 A short book introducing Common Lisp to working programmers, by
 [Dave Cooper](https://davecooper.name).
 
+**Read it:** [understanding-common-lisp.pdf](https://davecooper.name/understanding-common-lisp.pdf),
+built from this repository on every change.
+
 Franz Inc. published the first edition in 2003 as *Basic Lisp
 Techniques* ([the 2003 edition](https://franz.com/resources/educational_resources/cooper.book.pdf)),
 and has distributed it as a free PDF ever since.  This 2026 edition
@@ -42,6 +45,9 @@ the standard LaTeX packages (on Debian or Ubuntu,
 Or, with Docker and nothing else installed:
 
     docker run --rm -v "$PWD":/book -w /book texlive/texlive:latest-small make
+
+The same build runs in CI (`.gitlab-ci.yml`) on every push to
+`master`, and its PDF is what the link above serves.
 
 ## Contributing
 
