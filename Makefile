@@ -1,4 +1,4 @@
-# Makefile for Basic Lisp Techniques book
+# Makefile for Understanding Common Lisp book
 # 
 # Targets:
 #   all (default) - Build the complete indexed PDF

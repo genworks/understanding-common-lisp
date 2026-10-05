@@ -1,10 +1,12 @@
-# Basic Lisp Techniques
+# Understanding Common Lisp
 
 A short book introducing Common Lisp to working programmers, by David
 Cooper, with a foreword by Franz Inc.  Franz has distributed it as a
-free PDF since 2003
+free PDF since 2003 under the title *Basic Lisp Techniques*
 ([the 2003 edition](https://franz.com/resources/educational_resources/cooper.book.pdf)),
 and it has served many programmers as a quick start in the language.
+This edition carries the title the book was meant to have from the
+start, *Understanding Common Lisp*.
 
 The original LaTeX source was lost.  The files in this repository were
 reconstructed from the book in December 2025.  `main.tex` carries a

@@ -1,4 +1,4 @@
-# Contributing to Basic Lisp Techniques
+# Contributing to Understanding Common Lisp
 
 Pull requests are welcome, and each one will be read and considered.
 Not every change will be taken: the book means to stay short and
