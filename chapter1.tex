@@ -4,106 +4,123 @@
 
 \subsection{Lisp Yesterday}
 
-John McCarthy discovered the basic principles of Lisp in 1958, when he was processing
-complex mathematical lists at MIT. Common Lisp (CL) is a high-level computer language,
-whose syntax follows a simple list-like structure. The term ``Lisp'' itself originally stood for
-``LISt Processing.'' When developing, testing, and running a CL program, at the core is a
-modern-day version of the original List Processor which processes (compiles, evaluates, etc.)
-the elements of your program. These elements, at the source code level, are represented
-as lists. A list, in this context, is just a sequence of items, much like a familiar shopping
-list or checklist. Originally the list was pretty much the only data structure supported by
-Lisp, but modern-day Common Lisp supports a wide range of flexible and efficient data
-structures.
+John McCarthy\index{McCarthy, John} worked out the basic principles of Lisp in 1958, at
+MIT. The name stood for ``LISt Processing'': the language was built
+for manipulating symbols and lists of symbols, where the other
+languages of the day were built for arithmetic. A list, in this
+sense, is just a sequence of items, like a shopping list or a
+checklist.
 
-A typical Common Lisp development and runtime environment behaves like a complete
-operating system, with multiple threads of execution and the ability to load new code
-and redefine objects (functions, etc.) dynamically, i.e. without stopping and restarting the
-``machine.''
+The idea that set Lisp apart was that a Lisp program is itself written
+as lists. The language can therefore read, build and transform
+programs with the same operations it uses on any other data. Everything
+that makes Lisp unusual follows from that.
 
-This ``operating system'' characteristic also makes CL significantly more flexible than
-other popular programming languages. Whereas some other languages, such as shell scripts
-or Perl CGI scripts\index{CGI scripts}, need to pipe data around, in CL all data manipulations can run
-interactively within one single process with a shared memory space.
+Lisp spread quickly through the research world and split into many
+dialects. In the early 1980s the people behind the main ones agreed to
+merge them into one language, Common Lisp. Guy Steele described it in
+the book \emph{Common Lisp: the Language} in 1984, and after ten more
+years of work it became an ANSI standard in 1994. It was the first
+object-oriented language to be standardized by ANSI\index{ANSI standard}.
 
 \subsection{Lisp Today}
 
-The most popular form of Lisp used today, ``ANSI Common Lisp\index{ANSI Common Lisp},'' was initially designed by
-Guy Steele in \emph{Common Lisp, the Language, 2nd Edition}\index{Common Lisp, the Language, 2nd Edition} (``CLtL2\index{CLtL2}'') --- (see the Bibliography in Appendix B). This version of Lisp became the accepted industry standard. In 1995,
-the American National Standards Institute\index{American National Standards Institute} recognized a slightly updated version as ANSI
-Common Lisp, the first object-oriented language to receive certification, and ANSI CL remains the only language that meets all of the criteria set forth by the Object Management
-Group (OMG) for a complete object-oriented language.
+The standard has not changed since 1994, and this turns out to be one
+of the best things about the language. A Common Lisp program written
+thirty years ago still runs today, usually without touching a line of
+it, on implementations and machines that did not exist when it was
+written. Libraries do not rot when a new version of the language
+comes out, because one does not come out. Code you write this year
+will not need rewriting for the language's sake.
 
-Paul Graham outlines ANSI CL in his 1996 book \emph{ANSI Common Lisp}, also listed in
-Appendix B.
+The language can stand still because it can be extended from the
+inside. Most of what other languages add in new versions (a new kind
+of loop, pattern matching, a new way to manage resources) can be added
+to Common Lisp by a library, and looks no different from what is built
+in. Section~\ref{sec:macros} shows how.
 
-Official language standardization is important, because it protects developers from becoming saddled with legacy applications as new versions of a language are implemented.
-For example, this lack of standardization has been a continuing problem for Perl developers.
-Since each implementation of Perl defines the behavior of the language, it is not uncommon
-to have applications that require outdated versions of Perl, making it nearly impossible to
-use in a mission-critical commercial environment.
+Meanwhile the implementations and tools have kept moving. There are
+several maintained implementations of Common Lisp, most of them free
+and open source, and the best of them compile to efficient machine
+code. Some two thousand
+open-source libraries can be installed with one command. Common Lisp
+is in daily commercial use in engineering design, scheduling and
+logistics, finance, and research computing, and it has a small, steady
+community of people who chose it on purpose.
 
 \subsection{Lisp Tomorrow}
 
-Many developers once hoped that the software development process of the future would be
-more automated through Computer-aided Software Engineering\index{Computer-aided Software Engineering} (CASE) tools. Such tools
-claim to enable programmers and non-programmers to diagram their applications visually
-and automatically generate code. While useful to a certain extent, traditional CASE tools
-cannot cover domain-specific details and support all possible kinds of customizations --- so
-developers inevitably need to hand-code the rest of their applications, breaking the link
-between the CASE model and the code. CASE systems fall short of being a true ``problem-solving tool.''
+For most of the history of software, people have hoped for tools that
+would let them describe a program at a high level and have the detailed
+code written for them. Lisp's answer has always been that the
+high-level description and the program should be the same thing,
+written in one language. A Common Lisp program can generate other
+Common Lisp code, normally at compile time, so you can build the
+language up toward your problem until the program reads like a
+description of it.
 
-The recursive nature of CL, and its natural ability to build applications in layers and
-build upon itself --- in essence, code which writes code which writes code..., makes CL a
-much better software engineering solution. CL programs can generate other CL programs
-(usually at compile-time), allowing the developer to define all parts of the application in
-one unified high-level language. Using macros and functions, naturally supported by the CL
-syntax, the system can convert applications written in the high-level language automatically
-into ``final'' code. Thus, CL is both a programming language and a powerful CASE tool,
-and there is no need to break the connection.
+That matters more now, not less. A growing share of code is drafted by
+AI models and then checked by people. A language with a small, regular
+syntax, a precise standard, and a running image that can be asked what
+is true right now is a good place to do that kind of work: the model
+can try an expression and see the answer before it proposes anything,
+and so can you. Section~\ref{sec:agents} says more.
 
-Several other features of CL also save significant development time and manpower:
-
-\begin{itemize}
-\item \textbf{Automatic Memory Management\index{Automatic Memory Management}/Garbage Collection:} inherent in CL's basic architecture.
-
-\item \textbf{Dynamic Typing\index{Dynamic Typing}:} In CL, values have types, but variables do not. This means that
-you don't have to declare variables, or placeholders, ahead of time to be of a particular
-type; you can simply create them or modify them on the fly\footnote{While you don't have to declare variable types, you may declare them. Doing so can help CL's compiler
-to optimize your program further.}.
-
-\item \textbf{Dynamic Redefinition\index{Dynamic Redefinition}:} You can add new operations and functionality to the running
-CL process without the need for downtime. In fact, a program can be running in one
-thread, while parts of the code are redefined in another thread. Moreover, as soon as
-the redefinitions are finished, the application will use the new code and is effectively
-modified while running. This feature is especially useful for server applications that
-cannot afford downtimes -- you can patch and repair them while they are running.
-
-\item \textbf{Portability:} The ``abstract machine'' quality of CL makes programs especially portable.
-\end{itemize}
+Several long-standing features of Common Lisp also save time and
+people:
 
 \begin{itemize}
-\item \textbf{Standard Features:} CL contains many built-in features and data structures that are
-non-standard in other languages. Features such as full-blown symbol tables and package systems, hash tables\index{hash tables}, list structures, and a comprehensive object system are several ``automatic'' features which would require significant developer time to recreate
-in other languages.
+\item \textbf{Automatic memory management\index{garbage collection}.} You do not
+allocate and free memory by hand. Lisp was the first language to have
+a garbage collector.
+
+\item \textbf{Dynamic typing\index{dynamic typing}.} Values have types, but variables
+do not have to. You can write a function without declaring the type
+of anything, and add declarations later where they help the compiler
+or the reader.
+
+\item \textbf{Redefinition while running.} You can add and replace
+functions, classes and data in a running program without stopping it.
+This is how Lisp is normally developed, and it also means that a
+server can be inspected and patched while it stays up.
+
+\item \textbf{A large standard language.} Hash tables, arbitrary-precision
+integers, exact fractions, multi-dimensional arrays, a full object
+system, formatted output, and a condition system for handling errors
+are all part of the standard.
+
+\item \textbf{Portability.} Because the standard is precise, code moves
+between implementations and operating systems with little or no
+change.
 \end{itemize}
 
-\section{Convergence of Hardware and Software}
+\section{Is Lisp Slow? Is It Big?}
 
-The most common criticism of Lisp usually made by programmers unfamiliar with the
-language is that Lisp applications are too big and too slow. While this may have been true
-20 years ago, it is absolutely not the case today. Today's inexpensive commodity computers
-have more memory than some of the most powerful machines available just five years ago,
-and easily meet the computing needs of a typical CL application. Hardware is no longer
-the critical factor. Programmers and development time are!
+The old complaints about Lisp were that it was too slow and needed too
+much memory. They were fair on the machines of the 1970s. They have
+not been true for a long time. Compiled Common Lisp runs at the speed
+of other compiled languages, and a Lisp image of forty megabytes is
+small next to a web browser tab.
 
-Further, CL programming teams tend to be small, because the inherent features in CL
-empower developers to do more. Without excessive effort, a single CL developer can create
-and deploy a sophisticated, powerful program in a much shorter period of time than if
-another language were used.
+The cost that matters today is the time of the people writing the
+program. Common Lisp teams tend to be small because one person with a
+good grasp of the language can build and maintain a great deal.
 
 \section{The CL Model of Computation}
 
-Programming in CL is distinguished from programming in other languages due to its unique
-syntax and development mode. CL allows developers to make changes and test them immediately, in an incremental manner. In other languages, a developer must follow the
-``compile-link-run-test'' cycle. These extra steps add minutes or hours to each cycle of development, and break the programmer's thought process. Multiply these figures by days,
-weeks, and months --- and the potential savings are phenomenal.
+In most languages you work in a cycle: edit the source, build, run the
+program from the beginning, and see what happens. In Common Lisp you
+start the Lisp once and leave it running. You type an expression and
+it is evaluated at once. You change a function and send just that
+function to the running Lisp, which replaces the old definition and
+carries on, with all its data still in memory. You test the change in
+the next second.
+
+This running Lisp is called the \emph{image}\index{image}, and the prompt where
+you talk to it is called the \emph{REPL}\index{REPL}, for read-eval-print loop: it
+reads an expression, evaluates it, prints the result, and waits for
+the next one. Working this way changes how you write programs. You
+build them in small pieces and try each piece as you go, so you find
+out early when you have misunderstood something.
+
+The next chapter shows how to set this up.

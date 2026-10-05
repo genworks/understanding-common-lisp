@@ -1,734 +1,634 @@
 \chapter{Operating a CL Development Environment}
 
-This chapter covers some of the hands-on techniques used when working with a CL development environment, specifically, the Allegro CL\index{Allegro CL}\textsuperscript{\textregistered} environment from Franz Inc. If you
-are completely unfamiliar with any Lisp language, you may wish to reference Chapter 3 as
-you read this chapter.
+This chapter covers the hands-on side of working with Common Lisp:
+installing it, talking to it, connecting it to your editor, loading
+libraries, and finding out what went wrong when something does. If
+Lisp code is completely new to you, you may want to glance ahead at
+Chapter~3 as you read.
 
-Ideally, while reading this chapter, you should have access to an actual Common Lisp\index{Common Lisp}
-session and try typing in some of the examples.
+It helps to think of a running Common Lisp as a small operating system
+of its own, sitting on top of whichever operating system your machine
+runs. You start it, and then you load things into it, ask it
+questions, and change it while it runs. People once built whole
+workstations this way, with Lisp all the way down.
 
-When working with Common Lisp, it helps to think of the environment as its own
-operating system, sitting on top of whatever operating system you happen to be working
-with. In fact, people used to build entire workstations and operating systems in Lisp. The
-Symbolics Common Lisp environment still runs as an emulated machine on top of the 64-bit
-Compaq/DEC Alpha CPU, with its own Lisp-based operating system.
+Have a Lisp running while you read, and type the examples in.
 
-A complete and current listing of available CL systems can be found on the Association
-of Lisp Users website, at
+\section{Choosing an Implementation}
 
-\begin{center}
-\texttt{http://www.alu.org/table/systems.htm}
-\end{center}
+Common Lisp is a standard with several implementations\index{implementations}, in the way
+that C and SQL are. The ones you are most likely to meet:
 
-These systems follow the same basic principles, and most of what you learn and write on one
-system can be applied and ported over to others. The examples in this guide were prepared
-using Allegro CL for Linux. Where possible, we will note Allegro CL-specific syntax and
-extensions.
+\begin{itemize}
+\item \textbf{SBCL}\index{SBCL} (Steel Bank Common Lisp), \url{https://www.sbcl.org}.
+Free and open source, with a compiler that produces fast native code
+and gives thorough warnings. The most widely used implementation.
+
+\item \textbf{CCL}\index{CCL} (Clozure CL), \url{https://ccl.clozure.com}. Free and
+open source. Compiles very quickly, and is pleasant to develop in.
+
+\item \textbf{ECL}\index{ECL} (Embeddable Common Lisp),
+\url{https://ecl.common-lisp.dev}. Free. Compiles by way of C, so
+it can be linked into C and C++ programs and runs almost anywhere.
+
+\item \textbf{ABCL}\index{ABCL} (Armed Bear Common Lisp), \url{https://abcl.org}.
+Free. Runs on the Java virtual machine and can call Java libraries.
+
+\item \textbf{Allegro CL}\index{Allegro CL}, from Franz Inc., \url{https://franz.com}, and
+\textbf{LispWorks}\index{LispWorks}, \url{https://www.lispworks.com}. Commercial
+products with their own development environments, graphical toolkits
+and support, each with a free edition for learning.
+\end{itemize}
+
+They all implement the same language, and what you learn on one
+carries over to the others. This book uses SBCL. Where something in
+the text is specific to SBCL, it says so.
 
 \section{Installing a CL Environment}
 
-Installing a CL environment is generally a straightforward process. For Allegro CL on Linux,
-this basically involves running a simple shell script which steps you through some licensing
-information, then proceeds to unpack the distribution, and sets up the CL executable and
-supporting files.
-
-The Windows installation involves somewhat less typing and more mouse clicking.
-
-\section{Running CL in a Shell Window}
-
-The most primitive and simplest way to run CL is directly from the Unix (Linux) shell
-from within a terminal window. Most programmers do not work this way on a daily basis
-because other modes of use provide more power and convenience with fewer keystrokes.
-This mode of working is sometimes useful for logging into a running CL system on a
-remote host (e.g. a CL process acting as a webserver) when using a slow dial-up connection.
-
-\subsection{Starting CL from a Terminal Window}
-
-To start a CL session from a terminal window, simply type
+SBCL is packaged for the common systems:
 
 \begin{verbatim}
-alisp
+sudo apt install sbcl         (Debian, Ubuntu)
+brew install sbcl             (macOS with Homebrew)
 \end{verbatim}
 
-from the Unix (or DOS) command line. Assuming your shell execution path is set up
-properly and CL is installed properly, you will see some introductory information, then will
-be presented with a Command Prompt which should look very similar to the following:
+\noindent
+For Windows there is an installer at \url{https://www.sbcl.org}. The
+packaged versions can be a few releases behind; the website has
+current binaries if you want them.
+
+If you use Docker\index{Docker}, you can try an implementation without installing
+anything. The \code{clfoundation} images on Docker Hub cover most of
+the free implementations:
 
 \begin{verbatim}
-CL-USER(1):
+docker run -it --rm clfoundation/sbcl
 \end{verbatim}
 
-CL has entered its read-eval-print loop, and is waiting for you to type something which it
-will then read, evaluate to obtain a return-value, and finally print this resulting return-value.
-The USER printed before the prompt refers to the current CL package (more on Packages
-later), and the number (1) simply keeps track of how many commands have been entered
-at the prompt.
+\section{Running CL in a Terminal}
 
-\subsection{Stopping CL from a Terminal Window}
+The simplest way to run CL is from a terminal. Few people work this
+way all day, because an editor connected to Lisp is far more
+convenient, but it is the place to start, and it is still useful for
+logging in to a Lisp that is running on a remote machine.
 
-Now that you have learned how to start CL, you should probably know how to stop it. In
-Allegro CL, one easy way to stop the CL process is to type
+\subsection{Starting and Stopping}
+
+To start SBCL, type
 
 \begin{verbatim}
-(excl:exit)
+sbcl
 \end{verbatim}
 
-at the Command Prompt. This should return you to the shell. In very rare cases, a stronger
-hammer is required to stop the CL process, in which case you can try typing
+\noindent
+You will see a few lines of introduction and then a prompt:
 
 \begin{verbatim}
-(excl:exit 0 :no-unwind t)
+This is SBCL 2.6.9, an implementation of ANSI Common Lisp.
+More information about SBCL is available at <http://www.sbcl.org/>.
+...
+*
 \end{verbatim}
 
-\textbf{Try It:} Now try starting and stopping CL several times, to get a feel for it. In general, you
-should notice that CL starts much more quickly on subsequent invocations. This is because
-the entire executable file has already been read into the computer's memory and does not
-have to be read from the disk every time.
-
-A shortcut for the \texttt{(excl:exit)} command is the toplevel command \texttt{:exit}. Toplevel
-commands are words which are preceded by a colon [:] that you can type at the CL
-Command Prompt as a shorthand way of making CL do something.
-
-\textbf{Try It:} Start the CL environment. Then, using your favorite text editor, create a file
-\texttt{/tmp/hello.lisp} and place the following text into it (don't worry about understanding
-the text for now):
+CL has entered its read-eval-print loop\index{REPL} and is waiting for you to type
+something. It will read what you type, evaluate it to get a return
+value, and print that value:
 
 \begin{verbatim}
-(in-package :user)
+* (+ 2 2)
+4
+\end{verbatim}
 
+To leave SBCL, type
+
+\begin{verbatim}
+(exit)
+\end{verbatim}
+
+\noindent
+Each implementation has its own name for this (in CCL it is
+\code{(quit)}). Typing the end-of-file character, Control-D, works in
+most of them.
+
+The bare terminal prompt has no command history and no line editing.
+If you plan to spend any time there, install \code{rlwrap} and start
+Lisp as \code{rlwrap sbcl}.
+
+\subsection{Compiling and Loading a File}
+
+\textbf{Try it:} With your text editor, create a file
+\code{/tmp/hello.lisp} containing the following (do not worry about
+understanding it yet):
+
+\begin{verbatim}
 (defun hello ()
   (write-string "Hello, World!"))
 \end{verbatim}
 
-Save the file to disk. Now, at the CL prompt in the shell where you started the CL
-environment, compile and load this file as follows (text after the ``USER'' prompt represents
-what you have to type; everything else is text printed by CL):
+Now, at the CL prompt, compile and load the file. The text after each
+\code{*} prompt is what you type; everything else is printed by CL:
 
 \begin{verbatim}
-CL-USER(3): (compile-file "/tmp/hello")
-;;; Compiling file /tmp/hello.lisp
-;;; Writing fasl file /tmp/hello.fasl Fasl write complete
-#p"/tmp/hello.fasl"
+* (compile-file "/tmp/hello.lisp")
+; compiling file "/tmp/hello.lisp" (written 05 OCT 2026 06:48:14 PM):
+
+; wrote /tmp/hello.fasl
+; compilation finished in 0:00:00.000
+#P"/tmp/hello.fasl"
 NIL
 NIL
-CL-USER(4): (load "/tmp/hello")
-; Fast loading /tmp/hello.fasl
+* (load "/tmp/hello")
 T
 \end{verbatim}
 
-By default, the \texttt{compile-file} command will look for files with the \texttt{.lisp} suffix, and the
-\texttt{load} command will load the resulting compiled machine-code (binary) file, which by default
-will have the extension \texttt{.fasl}. The extension ``.fasl'' stands for ``FASt Loading'' file.
+\code{Compile-file}\index{compile-file@\texttt{compile-file}} translates the source file into a binary file of
+machine code. The binary is called a \emph{fasl} file\index{fasl file}, for ``fast
+loading.'' \code{Load}\index{load@\texttt{load}} brings a file's definitions into the running
+Lisp. Given a name with no extension, it picks the fasl file if there
+is one.
 
-Note that, in general, simply loading an uncompiled Lisp file (using \texttt{load}) will functionally have the same effect as loading a compiled binary (fasl) file. But the fasl file will load
-faster, and any functions, objects, etc. defined in it will perform faster, since they will have
-been optimized and translated into language which is closer to the actual machine. Unlike
-Java ``class'' files, CL fasl files usually represent native machine-specific code. This means
-that compiled CL programs will generally run much faster than compiled Java programs,
-but CL programs must be compiled separately for each type of machine on which you want
-to run them.
+You can also \code{load} a source file directly, and the effect is the
+same, except that it has to be processed each time. Fasl files are
+specific to the implementation, its version, and the kind of machine.
+You do not pass them around; each Lisp makes its own from the source.
 
-Finally, try executing the newly defined function \texttt{hello} by typing the following at your
-command line:
+Now call the function you defined:
 
 \begin{verbatim}
-CL-USER(5): (hello)
+* (hello)
 Hello, World!
 "Hello, World!"
 \end{verbatim}
 
-You should see the String \texttt{Hello, World!} printed (without double-quotes), then the returned String (with double-quotes) will be printed as well. In the next chapter, we will
-learn more about exactly what is going on here. For now the main point to understand is
-the idea of compiling and loading definitions from files, and invoking functions by typing
-expressions at the CL command line.
+The text appears twice. The first line is the function printing the
+string, as you asked it to. The second is the REPL printing the value
+that the function returned, which happens to be the same string; it
+is shown in double quotes because the REPL prints values in the form
+you would type them. Chapter~3 has more on this.
 
-\section{Running CL inside a Text Editor}
+The point for now is the way of working: definitions live in files,
+you compile and load them into a running Lisp, and you call them from
+the prompt.
 
-A more powerful way of developing with CL is by running it from within a Unix (or DOS)
-shell that is running inside a buffer in a powerful text editor, such as Gnu Emacs\index{Emacs}\footnote{Gnu Emacs comes pre-installed with all Linux systems, and for other systems should come as part
-of your Allegro CL distribution. In any case, Emacs distributions and documentation are available from
-http://www.gnu.org}. One
-advantage of this approach is that the editor (in our example, Emacs) keeps a history of
-the entire session: both the expressions the programmer has typed, as well as everything
-that CL has printed. All these items can be easily reviewed or recalled.
+\section{Running CL inside an Editor}
 
-\subsection{A Note on Emacs and Text Editors}
+The way most people develop in CL is with the Lisp running as a
+subprocess of their text editor. The editor then knows about the
+running Lisp. With a keystroke you can send it the function you are
+editing, ask it for a function's arguments or documentation, jump to
+the source of anything that is defined, and look inside live data.
 
-To develop using Common Lisp, you can, of course, use any text editor of your choice,
-although Emacs happens to be especially synergistic for working with CL, for reasons we
-will discuss later. With a bit of practice, you will find that the combination of Emacs and
-Allegro CL provides a more powerful and convenient development environment than any of
-today's flashy ``visual programming'' environments. If you are used to working with the ``vi''
-editor, Emacs comes with several ``vi'' emulation modes which you may want to experiment
-with on a transitional basis. If you are used to working with a standard Windows-based
-text editor, you will find a smooth transition to Emacs.
+\subsection{Emacs with SLIME or Sly}
 
-This guide provides examples using Gnu Emacs.
+The traditional editor for Lisp is GNU Emacs\index{Emacs}, which is itself largely
+written in a dialect of Lisp, and the standard connection between
+Emacs and Common Lisp is SLIME\index{SLIME} (\url{https://slime.common-lisp.dev}).
+Sly\index{Sly} is a fork of SLIME with some added conveniences. Both work with
+every implementation listed above, and what follows applies to both.
 
-To work with CL in an Emacs shell buffer, you should be reasonably familiar with the
-text editor. If you are completely new to Gnu Emacs, go through the Emacs Tutorial,
-available under the ``Help'' menu at the top of the Emacs window.
+If you are new to Emacs, run its built-in tutorial first (it is under
+the Help menu). Emacs commands are written as key chords: \code{C-x}
+means hold Control and press x; \code{M-x} means hold Meta, which is
+the Alt or Option key, and press x.
 
-\subsection{Emacs Terminology}
-
-As you will learn in the Emacs Tutorial, when working with Emacs you make frequent use
-of key chords. Similar to ``chords'' on a piano, keychords can allow powerful text processing
-with relatively few sequential keystrokes.
-
-They are key combinations involving holding down the Control key and/or the Meta
-key, and pressing some other regular key.
-
-See Appendix C for information on which keys represent Control and Meta on your
-keyboard, and how you can customize these. To begin, try using the key labeled ``Control''
-for Control and the keys labeled ``Alt'' (or the diamond-shaped key on Sun keyboards) for
-Meta. If your keyboard has a ``Caps Lock'' key to the left of the letter ``A,'' you should
-consider remapping this to function as Control, as explained in Appendix C.
-
-This guide uses the following notations to indicate keychords (identical to those referenced in the Emacs Tutorial):
-
-\begin{itemize}
-\item \texttt{M-x} means to hold down the Meta key, and press (in this case) the ``X'' key
-\item \texttt{C-x} means to hold down the Control key, and press (in this case) the ``X'' key
-\item \texttt{C-M-q} means to hold down the Control key and the Meta key at the same time , and
-press (in this case) the ``Q'' key
-\item \texttt{M-A} would mean to hold down the Meta key, and the Shift key (because the ``A'' is
-uppercase), and press (in this case) the ``A'' key.
-\end{itemize}
-
-\subsection{Starting, Stopping, and Working With CL inside an Emacs Shell}
-
-To start Emacs, type
+To install SLIME, add the MELPA package archive to Emacs if you have
+not already (\url{https://melpa.org} has the two lines to copy), then
+type \code{M-x package-install}, press Return, and give the name
+\code{slime}. Then put this line in your Emacs init file to say
+which Lisp to run:
 
 \begin{verbatim}
-emacs
+(setq inferior-lisp-program "sbcl")
 \end{verbatim}
 
-or
+Now \code{M-x slime} starts Lisp and opens a REPL in an Emacs window.
+The prompt shows the current package, a notion explained in
+Section~\ref{sec:packages}:
 
 \begin{verbatim}
-gnuemacs
+CL-USER> (+ 2 2)
+4
 \end{verbatim}
 
-then start a Unix (or DOS) shell within emacs by typing \texttt{M-x shell}. Now type
+\noindent
+The rest of this book shows examples with this prompt.
 
-\begin{verbatim}
-lisp
-\end{verbatim}
+Table~\ref{tab:slime} lists the commands you will use most.
 
-inside this shell's window to start a CL session there. To shut down a session, exit CL
-exactly as above by typing
-
-\begin{verbatim}
-(excl:exit)
-\end{verbatim}
-
-Exit from the shell by typing
-
-\begin{verbatim}
-exit
-\end{verbatim}
-
-and finally exit from Emacs by typing \texttt{C-x C-c} or \texttt{M-x kill-emacs}. Note that it is good
-practice always to exit from CL before exiting from Emacs. Otherwise the CL process may
-be left as an ``undead'' (zombie) process.
-
-When in the CL process, you can move forward and backward in the ``stack'' (history)
-of expressions that you have typed, effectively recalling previous commands with only a few
-keystrokes. Use \texttt{M-p} to move backward in the history, and \texttt{M-n} to move forward. You can
-also use all of the editor's text processing commands, for example to cut, copy, and paste
-expressions between the command line and other windows and open files (``buffers'') you
-may have open.
-
-\textbf{Try It:} try typing the following expressions at the CL prompt. See what return-values
-are printed, and try recalling previous expressions (commands) using \texttt{M-p} and \texttt{M-n}:
-
-\begin{verbatim}
-(list 1 2 3)
-
-(+ 1 2 3)
-
-(> 3 4)
-
-(< 3 4)
-\end{verbatim}
-
-Now, of course, you can edit, compile, load, and test your \texttt{hello.lisp} file as we did in
-Section 2.2. But this time you are staying within a single environment (the text editor
-environment) to achieve all these tasks.
-
-\section{Running CL as a subprocess of Emacs}
-
-An even more powerful way of developing with Allegro CL is by running it within Emacs
-in conjunction with a special Emacs/Lisp interface provided by Franz Inc. This technique
-provides all the benefits of running in an Emacs shell as outlined above, but is more powerful
-because the Emacs-CL interface extends Emacs with several special commands. These
-commands interact with the CL process, making the editor appear to be ``Lisp-aware.'' The
-combination of Emacs with the Emacs-CL interface results in a development environment
-whose utility approaches that of the vintage Symbolics Lisp Machines, which many Lisp
-aficionados still consider to be technology advanced well beyond anything produced today.
-
-Complete documentation of the Emacs-CL interface can be viewed by pointing your
-web browser at: \texttt{file:/usr/local/acl62/doc/eli.htm} (you may have to modify this
-pathname to point to your actual installed location of Allegro CL (acl62)).
-
-\subsection{Starting the CL subprocess within Emacs}
-
-To enable your Emacs to function in the proper manner, place the following expressions in
-a file named \texttt{.emacs} in your home directory:
-
-\begin{verbatim}
-(setq load-path
-      (cons "/usr/local/acl62/eli" load-path))
-(load "fi-site-init")
-\end{verbatim}
-
-As above, you may have to modify this pathname to point to your actual installed location
-of Allegro CL (acl62). Once you have added these lines to your \texttt{.emacs} file, you should be
-able to restart emacs, then issue the command:
-
-\begin{verbatim}
-M-x fi:common-lisp
-\end{verbatim}
-
-to start CL running and automatically establish a network connection between the Emacs
-process and the CL process (in theory, the two processes could be running on different
-machines, but in practice they usually will run on the same machine). Accept all the
-defaults when prompted.
-
-You can also start emacs with the CL subprocess automatically from a terminal window,
-by invoking emacs with an optional ``function'' argument, as follows:
-
-\begin{verbatim}
-emacs -f fi:common-lisp
-\end{verbatim}
-
-This will start Emacs, which itself will immediately launch CL.
-
-\subsection{Working with CL as an Emacs subprocess}
-
-Once you have started CL within Emacs, you will be presented with a special buffer named
-\texttt{*common-lisp*} which in many ways is similar to simply running CL within a shell within
-Emacs as above. But now you have several more capabilities available to you, as outlined
-in Table 2.1.
-
-\begin{table}[h]
+\begin{table}[ht]
 \centering
-\begin{tabular}{|l|l|l|}
+\begin{tabular}{ll}
 \hline
-\textbf{Keychord} & \textbf{Action} & \textbf{Emacs-Lisp function} \\
+\textbf{Key} & \textbf{Action} \\
 \hline
-C-M-x & Compiles and loads & fi:lisp-eval-or-compile-defun \\
-      & the function near the & \\
-      & Emacs point & \\
-\hline
-C-c C-b & Compiles and loads & fi:lisp-eval-or-compile-current-buffer \\
-        & the current Emacs & \\
-        & buffer & \\
-\hline
-M-A & Shows the Argument & fi:lisp-arglist \\
-    & List for a CL function & \\
-\hline
-C-c . & Finds the definition & fi:lisp-find-definition \\
-      & of a CL object & \\
+\code{C-c C-c} & Compile the definition the cursor is in \\
+\code{C-c C-k} & Compile and load the whole file \\
+\code{C-x C-e} & Evaluate the expression before the cursor \\
+\code{C-c C-z} & Switch to the REPL \\
+\code{M-.}     & Go to the definition of the name at the cursor \\
+\code{M-,}     & Come back from there \\
+\code{C-c C-d d} & Describe the name at the cursor \\
+\code{C-c RET} & Expand the macro call at the cursor \\
+\code{M-p}, \code{M-n} & In the REPL: previous and next input \\
+\code{C-c C-c} & In the REPL: interrupt a running computation \\
 \hline
 \end{tabular}
-\caption{Common Commands of the Emacs-Lisp Interface}
-\label{tab:emacs-lisp}
+\caption{Common SLIME and Sly commands}
+\label{tab:slime}
 \end{table}
 
-To summarize, the Lisp-Emacs interface adds capabilities such as the following to your
-development environment:
+While you type a call to a function, its argument list is shown at the
+bottom of the window. Emacs indents Lisp code for you and shows which
+parentheses match, so you read the structure of the code from its
+indentation and never count parentheses.
 
-\begin{itemize}
-\item Start and stop the CL process using Emacs commands
+\textbf{Try it:} Open \code{/tmp/hello.lisp} in Emacs, with SLIME
+running. Put the cursor inside the definition of \code{hello} and
+press \code{C-c C-c}. Switch to the REPL with \code{C-c C-z} and type
+\code{(hello)}. Now go back to the file, change the string to
+\code{"Hello, CL World!"}, press \code{C-c C-c} again, and call
+\code{(hello)} again in the REPL. You have changed a running program
+without restarting it.
 
-\item Compile and load files into the running CL process, directly from the open Emacs
-buffer you are editing (no need explicitly to save the file, call the \texttt{compile-file}
-function, then call the \texttt{load} function, as with the ``in-a-shell'' techniques above)
+\subsection{Other Editors}
 
-\item Query the running CL process for information about objects currently defined in it
---- for example, querying the CL, directly from Emacs, for the argument List of a
-particular function
+Emacs is not required. Visual Studio Code has the Alive\index{Alive} extension,
+which gives a REPL, evaluation from the editor, a debugger and an
+inspector. Vim and Neovim have Vlime and Slimv. Lem\index{Lem}
+(\url{https://lem-project.github.io}) is an Emacs-like editor written
+in Common Lisp, which works with Lisp as soon as it starts. Allegro
+CL and LispWorks each come with their own environment.
 
-\item Run multiple read-eval-print loops, or listeners, in different threads of CL execution,
-as Emacs buffers
+Whatever you choose, make sure it gives you the essentials: a REPL,
+a key to send the current definition to the running Lisp, and
+automatic indentation.
 
-\item Compile and load specified sections of an open Emacs buffer
+\section{The Init File}
 
-\item Locate the source code file corresponding to any defined CL object, such as a function
-or parameter, and automatically open it in an Emacs buffer
+When CL starts, it looks for an initialization file in your home
+directory and loads it\index{init file}. In SBCL this is \code{.sbclrc}; in CCL it is
+\code{.ccl-init.lisp}. The file holds ordinary Lisp, and is the place
+to load the tools you want in every session. The next section puts
+something in it.
 
-\item Perform various debugging actions and other general CL help capabilities, directly
-from within the Emacs session
-\end{itemize}
+\section{Libraries: Quicklisp and ASDF}
 
-In short, Emacs becomes a remarkably powerful, infinitely customizable, CL integrated
-development environment.
+\subsection{Loading Libraries with Quicklisp}
 
-\subsection{Compiling and Loading a File from an Emacs buffer}
-
-\textbf{Try it:} Try starting Emacs with a CL subprocess as outlined above. If you have trouble,
-consult the URL listed above for complete instructions on running the Lisp-Emacs interface.
-
-Once you have Emacs running with a CL subprocess, you should have a buffer named
-\texttt{*common-lisp*}. If your Emacs session is not already visiting this buffer, visit it with the
-command \texttt{C-x b *common-lisp*}, or select \texttt{*common-lisp*} from the ``Buffers'' menu in
-Emacs (see Appendix C for instructions on how to set up a ``hot key'' for this and other
-common tasks when working with the Emacs-Lisp interface).
-
-Now, split your Emacs frame into two windows, with the command \texttt{C-x 2}. In both
-windows you should now see \texttt{*common-lisp*}. Now move the point\footnote{In technical Emacs parlance, the point is the insertion point for text, and the cursor is the mouse
-pointer.} to the other window
-with \texttt{C-x o}, and open the \texttt{hello.lisp} file you created for the previous exercise\footnote{Remember that pressing the space bar will automatically complete filenames for you when opening files
-in Emacs.}. If you
-don't have that file handy, create it now, with the following contents:
+Quicklisp\index{Quicklisp} (\url{https://www.quicklisp.org}) downloads and loads
+open-source libraries, along with whatever they depend on. To install
+it, download one file and load it:
 
 \begin{verbatim}
-(defun hello ()
-  (write-string "Hello, World!"))
+curl -O https://beta.quicklisp.org/quicklisp.lisp
+sbcl --load quicklisp.lisp
 \end{verbatim}
 
-Now, compile and load the contents of this function definition with \texttt{C-M-x}. Finally, switch
-to the \texttt{*common-lisp*} window again with \texttt{C-x o}, and try invoking the \texttt{hello} function by
-calling it in normal Lisp fashion:
+\noindent
+and then, at the Lisp prompt:
 
 \begin{verbatim}
-CL-USER(5): (hello)
-Hello, World!
-"Hello, World!"
+* (quicklisp-quickstart:install)
+* (ql:add-to-init-file)
 \end{verbatim}
 
-You should see the results printed into the same \texttt{*common-lisp*} buffer.
-
-\textbf{Try it:} Now try the following: go back to the \texttt{hello.lisp} buffer, make an edit to
-the contents (for example, change the String to ``Hello, CL World!''). Now compile the
-buffer with this change (Note that you do not necessarily have to save the file). Finally,
-return to the \texttt{*common-lisp*} buffer, and try invoking the function again to confirm that
-the redefinition has taken effect.
-
-You have now learned the basic essentials for working with the Emacs-Lisp interface.
-See Appendix C for more information about Emacs customization and convenient Emacs
-commands specific to the Lisp editing mode.
-
-\section{Integrated Development Environment}
-
-Some CL implementations support or integrate with an IDE, or Integrated Development
-Environment. Such environments provide visual layout and design capabilities for User
-Interfaces and other graphical, visual techniques for application development. For example,
-such a system is available for Allegro CL on the Microsoft platforms. The details of these
-systems are covered in their own documentation and are beyond the scope of this guide.
-
-\section{The User Init File}
-
-When CL begins execution, it usually looks for an initialization file, or ``init'' file, to load.
-When CL loads this file, it will read and evaluate all the commands contained in it.
-
-The default name and location for this initialization file is
+The second form adds a few lines to your init file so that Quicklisp
+is there whenever you start Lisp. From then on, one call fetches a
+library and loads it:
 
 \begin{verbatim}
-.clinit.cl
+CL-USER> (ql:quickload "alexandria")
+To load "alexandria":
+  Load 1 ASDF system:
+    alexandria
+; Loading "alexandria"
+
+("alexandria")
+CL-USER> (alexandria:flatten '(1 (2 (3 4)) 5))
+(1 2 3 4 5)
 \end{verbatim}
 
-in the user's home directory on Unix/Linux, and
+Alexandria, loaded here, is a collection of small utilities that most
+other libraries use. \code{(ql:system-apropos "json")} searches the
+library list by name. Chapter~4 uses several libraries, and
+Chapter~5 says where to look for more.
+
+Quicklisp is the common starting point, and there are other tools for
+the same job, such as ocicl and Qlot, which add things like pinning
+the exact versions a project uses.
+
+\subsection{Defining Your Own System with ASDF}
+\label{sec:asdf}
+
+A program of any size is spread over several files, some of which have
+to be loaded before others. ASDF\index{ASDF} is the standard tool for describing
+that. It comes with every implementation mentioned in this chapter,
+and it is what Quicklisp uses underneath. In ASDF, a library or
+program is called a \emph{system}\index{system}, and is described by a file
+ending in \code{.asd}.
+
+Here is a complete small system, in a directory named
+\code{greeter}. First \code{greeter.asd}:
 
 \begin{verbatim}
-c:\clinit.cl
+(defsystem "greeter"
+  :description "A very small example system."
+  :version "0.1.0"
+  :depends-on ("alexandria")
+  :components ((:file "package")
+               (:file "greet" :depends-on ("package"))))
 \end{verbatim}
 
-on Windows systems.
-
-For example, the init file can be used to define library functions and variables that the
-user employs frequently, or to control other aspects of the CL environment. An example
-init file is:
+\noindent
+then \code{package.lisp}:
 
 \begin{verbatim}
-(in-package :user)
-
-(defun load-project ()
-  (load "~/lisp/part1")
-  (load "~/lisp/part2"))
+(defpackage :greeter
+  (:use :common-lisp)
+  (:export #:greet))
 \end{verbatim}
 
-This will have the effect of defining a convenient function the user can then invoke to
-load the files for the current project. Note the call to the \texttt{in-package} function, which
-tells CL which Package to make ``current'' when loading this file. As we will see in more
-detail in Section 3.7, CL Packages allow programs to be separated into different ``layers,'' or
-``modules.'' Notice also that in the calls to \texttt{load} we do not specify a file ``type'' extension,
-e.g. \texttt{.lisp} or \texttt{.fasl}. We are making use of the fact that the \texttt{load} function will look first
-for a binary file (of type fasl), and if this is not found it will then look for a file of type
-cl or lisp. In this example we assume that our Lisp files will already have been compiled
-into up-to-date binary fasl files.
-
-In Section 2.9 we will look at some techniques for managing larger projects, and automating both the compiling and loading process for the source files making up a project.
-
-\textbf{Note:} the IDE mentioned in Section 2.5 is also a full-featured and powerful project
-system. The IDE is described in its own documentation, and is beyond the scope of this
-document.
-
-\section{Using CL as a scripting language}
-
-Although CL is usually used in the interactive mode described above while developing a
-program, it can be also used as a scripting language in more of a ``batch'' mode. For
-example, by running CL as:
+\noindent
+and \code{greet.lisp}:
 
 \begin{verbatim}
-lisp -e '(load "~/script")' < datafile1 > datafile2
+(in-package :greeter)
+
+(defun greet (name)
+  (format nil "Hello, ~a!" (string-capitalize name)))
 \end{verbatim}
 
-it will load all of the function definitions and other expressions in file \texttt{script.fasl} or
-\texttt{script.lisp}, will process \texttt{datafile1} on its Standard Input, and will create \texttt{datafile2}
-with anything it writes to its Standard Output. Here is an example of a simple \texttt{script.lisp}
-file:
+Put the \code{greeter} directory inside \code{\textasciitilde/common-lisp/},
+which is where ASDF looks by default, and you can load the system by
+name like any other library:
 
 \begin{verbatim}
-(in-package :user)
+CL-USER> (ql:quickload "greeter")
+To load "greeter":
+  Load 1 ASDF system:
+    greeter
+; Loading "greeter"
 
-(defun process-data ()
-  (let (x j)
-    ;;Read a line of input from datafile1
-    (setq x (read-line))
-    
-    ;;Remove leading spaces from X
-    (setq j (dotimes (i (length x))
-              (when (not (string-equal " " (subseq x i (+ i 1))))
-                (return i))))
-    (setq x (subseq x j))
-    
-    ;;Write the result to datafile2
-    (format t "~A~%" x)))
-
-(process-data)
+("greeter")
+CL-USER> (greeter:greet "reader")
+"Hello, Reader!"
 \end{verbatim}
 
-This file defines a function to process the datafile, then calls this function to cause the
-actual processing to occur.
+ASDF compiles each file the first time and whenever it has changed,
+keeps the fasl files out of your source directory, and loads the files
+in an order that respects the dependencies you declared. Quicklisp
+fetches Alexandria if it is not yet installed.
 
-Note the use of the semicolon (``$;$''), which is a reader macro which tells CL to treat
-everything between it and the end of the line as a comment (to be ignored by the CL
-Reader).
+Start every project this way, however small. It costs three short
+files, and it means anyone, including you a year from now, can load
+the program with one line.
+
+\section{Scripts and Standalone Programs}
+
+\subsection{Running a File as a Script}
+
+CL is normally used interactively, but it will also run a file from
+the command line and exit\index{scripting}. Here is \code{script.lisp}, which copies
+its input to its output with leading spaces removed from each line:
+
+\begin{verbatim}
+;;; Print each line of standard input with leading spaces removed.
+(loop for line = (read-line *standard-input* nil)
+      while line
+      do (write-line (string-left-trim " " line)))
+\end{verbatim}
+
+\begin{verbatim}
+sbcl --script script.lisp < datafile1 > datafile2
+\end{verbatim}
+
+A semicolon starts a comment\index{comments}, which runs to the end of the line. By
+convention one semicolon is used for a comment after code on the same
+line, two for a comment on its own line inside a definition, and three
+for a comment at the top level of a file.
+
+With \code{--script}, SBCL skips your init file, so Quicklisp is not
+loaded and neither is ASDF. A script that needs them starts by
+loading them itself.
+
+\subsection{Building an Executable}
+
+Because a running Lisp is an image\index{image} in memory, most implementations
+can write that image to disk, and can write it as a program that
+starts in a function of your choosing. This is how a Lisp application
+is delivered to someone who does not have Lisp installed. In SBCL:
+
+\begin{verbatim}
+(defun main ()
+  (format t "Hello from a standalone program!~%"))
+
+(sb-ext:save-lisp-and-die "hello-app"
+                          :toplevel #'main
+                          :executable t)
+\end{verbatim}
+
+This writes a file \code{hello-app} that runs on any machine of the
+same kind. It is about forty megabytes, because it contains the whole
+Lisp, compiler included. Each implementation has its own function
+for this. If you need one build recipe for several implementations,
+ASDF can do it; look up \code{program-op} in its manual.
 
 \section{Debugging in CL}
+\label{sec:debugging}
 
-CL provides one of the most advanced debugging and error-handling capabilities of any
-language or environment. The most obvious consequence of this is that your application
-will very rarely ``crash'' in a fatal manner. When an error occurs in a CL program, a break
-occurs. CL prints an error message, enters the debugger, and presents the user with one
-or more possible restart actions. This is similar to running inside a debugger, or in ``debug
-mode,'' in other languages, but in CL this ability comes as a built-in part of the language.
+Common Lisp has one of the best debugging and error-handling
+arrangements of any language, and it is always on. There is no
+separate debug mode and no debug build.
 
-For example, if we call the \texttt{+} function with an alphabetic Symbol instead of a Number,
-we generate the following error:
+\subsection{The Debugger}
+
+When an error happens in most languages, the program unwinds to the
+top and dies, and you read a stack trace to work out what the state
+must have been. When an error happens in Common Lisp, the program
+\emph{stops where the error happened}, with everything still in place,
+and you are put into the debugger\index{debugger}:
 
 \begin{verbatim}
-CL-USER(95): (+ 'r 4)
-Error: 'R' is not of the expected type 'NUMBER'
-  [condition type: TYPE-ERROR]
+* (defun oops (x) (/ 10 x))
+OOPS
+* (oops 0)
 
-Restart actions (select using :continue):
- 0: Return to Top Level (an "abort" restart)
-[1] CL-USER(96):
+debugger invoked on a DIVISION-BY-ZERO in thread
+#<THREAD tid=59 "main thread" RUNNING {1200038003}>:
+  arithmetic error DIVISION-BY-ZERO signalled
+Operation was (/ 10 0).
+
+Type HELP for debugger help, or (SB-EXT:EXIT) to exit from SBCL.
+
+restarts (invokable by number or by possibly-abbreviated name):
+  0: [ABORT] Exit debugger, returning to top level.
+
+(SB-KERNEL::INTEGER-/-INTEGER 10 0)
+0]
 \end{verbatim}
 
-The number [1] at the front of the prompt indicates that we are in the debugger, at Level 1.
-The debugger is itself a CL Command Prompt just like the toplevel Command Prompt, but
-it has some additional functionality. The next section provides a partial list of commands
-available to be entered directly at the debugger's Command Prompt:
+The prompt \code{0]} is the debugger's. It is still a Lisp prompt:
+you can evaluate any expression there, look at variables, and even
+redefine the function that failed. \code{backtrace} shows the chain
+of calls that led here. Typing \code{0}, or \code{abort}, takes the
+restart numbered 0 and returns you to the normal prompt.
 
-\subsection{Common debugger commands}
+In SLIME or Sly the same information appears in its own window. Press
+the number of a restart to choose it, \code{q} to abort back to the
+REPL, Return on a line of the backtrace to see that call's local
+variables, and \code{v} to jump to its source.
+
+\subsection{Restarts}
+
+The list headed ``restarts'' is the unusual part\index{restarts}. A restart is a
+way of carrying on that the program itself has offered. Try opening
+a file that does not exist:
+
+\begin{verbatim}
+* (with-open-file (in "/tmp/nope.conf") (read in))
+
+debugger invoked on a FILE-DOES-NOT-EXIST in thread
+#<THREAD tid=68 "main thread" RUNNING {1200038003}>:
+  The file #P"/tmp/nope.conf" does not exist: No such file or directory
+
+restarts (invokable by number or by possibly-abbreviated name):
+  0: [CREATE   ] Reopen with :if-does-not-exist :create
+  1: [CONTINUE ] Retry opening.
+  2: [USE-VALUE] Try opening a different file.
+  3: [ABORT    ] Exit debugger, returning to top level.
+\end{verbatim}
+
+You could now create the file from another window and choose restart
+1, and the program would carry on from the middle as if nothing had
+gone wrong. When the failure comes two hours into a long computation,
+that is worth a great deal. Section~\ref{sec:conditions} shows how a
+program handles errors itself, without the debugger.
+
+\subsection{Stopping a Program Yourself}
+
+To interrupt a computation that is taking too long, press Control-C in
+the terminal, or \code{C-c C-c} in the SLIME REPL. You land in the
+debugger, where you can look around and then either continue or abort.
+
+To make a program stop at a particular place, call \code{break}\index{break@\texttt{break}} there:
+
+\begin{verbatim}
+(defun risky (n)
+  (break "n is ~a" n)
+  (* n 2))
+\end{verbatim}
+
+\noindent
+Calling \code{(risky 21)} enters the debugger with the message ``n is
+21'' and a \code{CONTINUE} restart, which resumes the function and
+returns 42.
+
+\subsection{Trace, Describe and Friends}
+
+\code{Trace}\index{trace@\texttt{trace}} prints every call to a function and what it returned,
+without your editing the function. It is especially good for seeing
+how a recursive function works:
+
+\begin{verbatim}
+CL-USER> (defun our-length (list)
+           (if (null list)
+               0
+               (+ (our-length (rest list)) 1)))
+OUR-LENGTH
+CL-USER> (trace our-length)
+(OUR-LENGTH)
+CL-USER> (our-length '(a b))
+  0: (OUR-LENGTH (A B))
+    1: (OUR-LENGTH (B))
+      2: (OUR-LENGTH NIL)
+      2: OUR-LENGTH returned 0
+    1: OUR-LENGTH returned 1
+  0: OUR-LENGTH returned 2
+2
+CL-USER> (untrace our-length)
+T
+\end{verbatim}
+
+The running Lisp can also tell you about itself.
+\code{Describe}\index{describe@\texttt{describe}} prints what is known about any object,
+\code{documentation}\index{documentation@\texttt{documentation}} returns a documentation string, and
+\code{apropos}\index{apropos@\texttt{apropos}} finds names containing a piece of text:
+
+\begin{verbatim}
+CL-USER> (documentation 'mapcar 'function)
+"Apply FUNCTION to successive tuples of elements of LIST and MORE-LISTS.
+Return list of FUNCTION return values."
+CL-USER> (apropos "HASH-TABLE-" :cl)
+HASH-TABLE-COUNT (fbound)
+HASH-TABLE-P (fbound)
+HASH-TABLE-REHASH-SIZE (fbound)
+HASH-TABLE-REHASH-THRESHOLD (fbound)
+HASH-TABLE-SIZE (fbound)
+HASH-TABLE-TEST (fbound)
+WITH-HASH-TABLE-ITERATOR (fbound)
+\end{verbatim}
+
+\subsection{Timing}
+
+Wrap any expression in the \code{time}\index{time@\texttt{time}} macro to see how long it takes
+and how much memory it allocates. The expression's value is returned
+as usual:
+
+\begin{verbatim}
+CL-USER> (defun fib (n)
+           (if (< n 2)
+               n
+               (+ (fib (- n 1)) (fib (- n 2)))))
+FIB
+CL-USER> (time (fib 30))
+Evaluation took:
+  0.023 seconds of real time
+  0.021844 seconds of total run time (0.021844 user, 0.000000 system)
+  95.65% CPU
+  65,398,250 processor cycles
+  0 bytes consed
+
+832040
+\end{verbatim}
+
+``Consed'' means allocated; Section~\ref{sec:cons} explains the word.
+For finding out where a larger program spends its time, the
+implementations provide profilers. SBCL's is called
+\code{sb-sprof}.
+
+\section{Working with an AI Agent}
+\label{sec:agents}
+
+Many programmers now work with an AI coding agent\index{AI agents}: a language model
+that reads the project, proposes changes, and runs commands. Lisp
+suits this way of working unusually well, for the same reasons it
+suits a person at a REPL.
+
+An agent working in most languages writes code, runs the whole program
+or its tests, and reads the output. An agent connected to a running
+Lisp image can do what you do: evaluate one expression and look at the
+answer, ask the image for a function's argument list or documentation
+instead of guessing, redefine one function and try it, and inspect the
+state left behind by an error. Mistakes are caught an expression at a
+time. The connection is usually made with the Model Context
+Protocol\index{Model Context Protocol} (MCP), a common way of giving a model tools to call. One
+open-source bridge between MCP and a running Lisp is lisply-mcp,
+\url{https://github.com/genworks/lisply-mcp}.
+
+Some advice that has held up:
 
 \begin{itemize}
-\item \texttt{:reset} returns to the toplevel (out of any debug levels)
-\item \texttt{:pop} returns up one level
-\item \texttt{:continue} continues execution after a break or an error
-\item \texttt{:zoom} Views the current function call stack\footnote{the call stack is the sequence of functions calls leading up to the error or break.}
-\item \texttt{:up} Moves the currency pointer up one frame in the stack
-\item \texttt{:down} Moves the currency pointer down one frame in the stack
-\item \texttt{:help} Describes all debugger commands
+\item Have the agent evaluate what it writes, in the image, before it
+shows it to you. Code that has only been written is a guess.
+
+\item Read what it produces. To check an agent's Lisp you need what
+this book teaches: what gets evaluated and when, what a function
+returns, what is modified in place.
+
+\item Let it work in a Lisp that is safe to break, such as a
+container, and keep your own work in version control.
 \end{itemize}
 
-Franz Inc.'s Allegro Composer product also offers graphical access to these commands,
-as well as additional functionality.
-
-\subsection{Interpreted vs Compiled Code}
-
-CL works with both compiled and interpreted code. When you type expressions at a Command Prompt, or use CL's \texttt{load} function to load lisp source files directly, you are introducing interpreted code into the system. This code does not undergo any optimization or
-translation into a lower-level machine representation --- internally to CL it exists in a form
-very similar to its source code form. CL must do considerable work every time such code
-is evaluated, since it must be translated into lower-level machine instructions on each use.
-When you create compiled code, on the other hand, for example by using CL's \texttt{compile-file}
-command in order to produce a fasl file, the code is optimized and translated into an efficient form. Loading the fasl file will replace any previous interpreted definitions with
-compiled definitions.
-
-Interpreted code is the best to use for debugging a program, because the code has not
-undergone as many transformations, so the debugger can provide the programmer with
-more recognizable information.
-
-If you are debugging with compiled code (e.g. after loading a fasl file), and you feel that
-not enough information is available from within the debugger, try redefining the function
-in interpreted form and running it again. To redefine a function in interpreted form you
-can, of course, simply load the lisp source file, rather than the compiled fasl file.
-
-\subsection{Use of (break) and C-c to interrupt}
-
-In order to cause a break in your program interactively, issue the \texttt{C-c} command. When
-running inside Emacs, you must use a ``double'' \texttt{C-c}, because the first \texttt{C-c} will be intercepted
-by Emacs. Depending on what your application is doing, it may take a few moments for it
-to respond to your break command. Once it responds, you will be given a normal debugger
-level, as described above.
-
-\subsection{Profiling}
-
-CL has built-in functionality for monitoring its own performance. The most basic and
-commonly used component is the \texttt{time} Macro. You can ``wrap'' the \texttt{time} Macro around
-any expression. Functionally, \texttt{time} will not affect the behavior of the expression, but it will
-print out information about how long the expression took to be evaluated:
-
-\begin{verbatim}
-CL-USER(2): (time (dotimes (n 10000) (* n 2)))
-; cpu time (non-gc)      70 msec user, 0 msec system
-; cpu time (gc)           0 msec user, 0 msec system
-; cpu time (total)       70 msec user, 0 msec system
-; real time               72 msec
-\end{verbatim}
-
-It is often interesting to look at the difference in time between interpreted and compiled
-code. The example above is interpreted, since we typed it directly at the Command Line,
-so CL had no opportunity to optimize the dotimes. In compiled form, the above code
-consumes only one millisecond as opposed to 72 milliseconds.
-
-In addition to the basic \texttt{time} Macro, Allegro CL provides a complete Profiler package,
-which allows you to monitor exactly what your program is doing, when it is doing it, how
-much time it takes, and how much memory it uses.
-
-\section{Developing Programs and Applications in CL}
-
-For developing a serious application in CL, you will want to have a convenient procedure
-in place for starting up your development session.
-
-\subsection{A Layered Approach}
-
-The development session consists of your favorite text editor with appropriate customizations, and a running CL process with any standard code loaded into it. While you can
-certainly develop serious applications on top of base CL, typically you will work in a layered fashion, on top of some standard tools or libraries, such as an embedded language, a
-webserver, etc.
-
-Using one of the techniques outlined below, starting a customized development session
-with your standard desired tools should become convenient and transparent.
-
-\subsection{Compiling and Loading your Project}
-
-An individual project will generally consist of a tree of directories and files in your computer's filesystem. We will refer to this directory tree as the project's codebase.
-
-Usually, it does not matter in what order the files in the codebase are compiled and
-loaded. Typical CL definitions, such as functions, classes, etc., can ordinarily be defined in
-any order. However, certain constructs, most notably Packages and Macros, do have order
-dependencies. In general, CL Packages and Macros must be defined before they can be
-used, or referenced.
-
-To start a development session on your project, you will generally want CL to do the
-following:
-
-\begin{enumerate}
-\item Go through your project's Codebase, finding source files (in the proper order when
-necessary, as noted above)
-
-\item For each file found, either load the corresponding binary file (if it is up-to-date), or
-compile the source file to create a new binary file and load it (if the source file has
-changed since the most recent compilation)
-\end{enumerate}
-
-CL does not dictate one standard way of accomplishing this task, and in fact, several
-options are available. One option is to use a defsystem package, which will allow you to
-prepare a special file, similar to a ``make'' file, which lists out all your project's source
-files and their required load order. Allegro CL contains its own Defsystem package as
-an extension to CL, and the open-source MK:Defsystem is available through Sourceforge
-(http://www.sourceforge.net).
-
-Using a Defsystem package requires you to maintain a catalog listing of all your project's
-source files. Especially in the early stages of a project, when you are adding, renaming, and
-deleting a lot of files and directories, maintaining this catalog listing by hand can become
-tiresome.
-
-For this purpose, you may wish to use a lighter-weight utility for compiling and loading
-your files, at least in the early stages of development. For very small projects, you can use
-the Allegro CL function \texttt{excl:compile-file-if-needed}, an extension to CL, by writing a
-simple function which calls this function repeatedly to compile and load your project's files.
-
-The Bootstrap package, available at http://gdl.sourceforge.net, provides the function \texttt{cl-lite}, which will traverse a codebase, compiling and loading files, and observing
-simple ``ordering directive'' files which can be placed throughout the codebase to enforce
-correct load ordering.
-
-For a new project, the best option is probably to start with a simple but somewhat
-manual loading technique, then graduate into more automated techniques as they become
-necessary and as you become more familiar with the environment.
-
-\subsection{Creating an Application ``Fasl'' File}
-
-Fasl files in Allegro CL and most other CL systems have the convenient property that they
-can simply be concatenated, e.g. with the Unix/Linux cat command, to produce a single
-fasl file. Loading this single file will have the same effect as loading all the individual files
-which went into it, in the same order as they were concatenated.
-
-In certain situations, this can be a convenient mechanism for loading and/or distributing
-your project. For example, you can prepare a concatenated fasl file, email it to a colleague,
-and the colleague needs only to load this file. Thus, there is no chance of confusion about
-how (e.g. in what order) to load individual files.
-
-\subsection{Creating an Image File}
-
-Loading Lisp source files or compiled binary files into memory at the start of each session
-can become slow and awkward for large programs.
-
-An alternative approach is to build an image file. This entails starting a CL process,
-loading all application files into the running CL process, then creating a new ``CL Image.''
-In Allegro CL, this is done by invoking the function:
-
-\begin{verbatim}
-excl:dumplisp
-\end{verbatim}
-
-The Image File is typically named with a \texttt{.dxl} extension. Once you have created an Image
-File, you can start a session simply by starting CL with that Image File, as follows:
-
-\begin{verbatim}
-lisp -I <image-file-name>.dxl
-\end{verbatim}
-
-You must then compile/load any files that have changed since the Image File was created.
-Starting CL with the Image File has the same effect as starting a base CL and loading all
-your application files, but is simpler and much faster.
-
-\subsection{Building Runtime Images}
-
-CL Image files built with \texttt{excl:dumplisp} contain the entire CL environment, and may
-also contain information which is specific to a certain machine or certain site. Allegro CL
-also provides a mechanism for building runtime images, which contain only the information needed to run an end-user application. These Runtime Images can be packaged and
-distributed just as with any stand-alone software application.
-
-Preparing runtime images for different platforms (e.g. Sun Solaris, Linux, Windows,
-etc.) is usually a simple matter of running a compilation and building a runtime image for
-the target platform --- application source code typically remains identical among different
-platforms. See your platform-specific documentation for details about creating Runtime
-Images.
-
-\subsection{Using an Application Init File}
-
-In some cases, for a finished production application, you will want the CL process to execute certain commands upon startup (for example, loading some data from a database).
-However, you do not want to depend on the end-user having the appropriate \texttt{.clinit.cl}
-in his or her home directory. For such cases, you can specify a different location for the init
-file, which can be installed along with the application itself. One way to accomplish this is
-with the \texttt{-q} command-line argument to the lisp command. This argument will tell CL to
-look in the current directory, rather than in the default location, for the init file.
-
-To use this technique, you would set up an ``application home'' directory, place the
-application's \texttt{.clinit.cl} file in this directory, and start the application with a production
-startup script. This script would first change into the ``application home'' directory, then
-start CL with your application's image file, or start a Runtime Image. Such a startup script
-might look like this:
-
-\begin{verbatim}
-cd $MYAPP_HOME
-lisp -I image.dxl -q
-\end{verbatim}
-
-In this example, both the application's init file and the application's image file would be
-housed in the directory named by the environment variable \texttt{\$MYAPP\_HOME}.
+An agent makes it more useful to understand the language, not less.
+You are the one who decides whether the program is right.

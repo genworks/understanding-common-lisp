@@ -24,8 +24,7 @@ describing it, with the chapter and section.
 
 1. Fork the repository on GitHub and make a branch for your change.
 2. Edit the `.tex` source of the chapter concerned (`chapter1.tex` to
-   `chapter5.tex`, `appendixA.tex` to `appendixC.tex`,
-   `afterword.tex`; `main.tex` holds the front matter).
+   `chapter5.tex`; `main.tex` holds the front matter).
 3. Build with `make` (see the README) and read your change in the
    PDF.  The build should finish without new errors or warnings.
 4. Open a pull request saying what you changed and why.  Keep one
@@ -37,9 +36,10 @@ Please:
   environments the surrounding text uses;
 - leave paragraphs you are not changing as they are (no reflowing),
   so the diff shows only your change;
+- run every code example you add or change, and paste what your Lisp
+  actually printed;
 - commit no generated files (the PDF, `.aux`, `.idx` and the rest are
-  ignored by `.gitignore`);
-- do not run `add-index-tags.sh`, which rewrites every chapter.
+  ignored by `.gitignore`).
 
 ## How changes land
 

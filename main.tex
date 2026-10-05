@@ -1,25 +1,31 @@
 \documentclass[11pt]{book}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{graphicx}
+\usepackage{lmodern}
+\usepackage{textcomp}
+\usepackage{upquote}   % straight ' and ` in code, so examples can be pasted
+\usepackage[margin=1.25in]{geometry}
 \usepackage{verbatim}
-\usepackage{fancyvrb}
-\usepackage{listings}
-\usepackage{hyperref}
 \usepackage{makeidx}
+\usepackage[colorlinks=true,linkcolor=black,urlcolor=blue,citecolor=black]{hyperref}
 \makeindex
 
-% Listings setup for code examples
-\lstset{
-  basicstyle=\ttfamily\small,
-  breaklines=true,
-  columns=fullflexible,
-  keepspaces=true
-}
+% Code examples a size smaller, so that 80 columns fit the line
+\makeatletter
+\renewcommand{\verbatim@font}{\normalfont\small\ttfamily}
+\makeatother
+\setlength{\emergencystretch}{2em}
+
+% A straight quote for inline code, as in \code{\q a} or \code{\#\q}
+\newcommand{\q}{\textquotesingle}
+% Inline code
+\newcommand{\code}[1]{\texttt{#1}}
+% The tilde of a format directive, as in \code{\td a}
+\newcommand{\td}{\textasciitilde}
 
 \title{Understanding Common Lisp}
-\author{David J. Cooper, Jr.}
-\date{February 14, 2011}
+\author{\href{https://davecooper.name}{Dave Cooper}}
+\date{2026 Edition}
 
 \begin{document}
 
@@ -31,17 +37,71 @@
 \thispagestyle{empty}
 \vspace*{\fill}
 \begin{center}
-\copyright{} Copyright 2011, Franz Inc. and David J. Cooper, Jr.
+Copyright \copyright{} 2003, 2026 Franz Inc. and
+\href{https://davecooper.name}{Dave Cooper}.
 
 \medskip
 First published in 2003 as \emph{Basic Lisp Techniques}.
+
+\medskip
+This book is licensed under the Creative Commons
+Attribution-ShareAlike 4.0 International License,\\
+\url{https://creativecommons.org/licenses/by-sa/4.0/}.
+
+\medskip
+The source is at
+\url{https://github.com/genworks/understanding-common-lisp}.
 \end{center}
 \vspace*{\fill}
 \clearpage
 
+% Preface
+\chapter*{Preface to the 2026 Edition}
+\addcontentsline{toc}{chapter}{Preface to the 2026 Edition}
+
+Franz Inc. commissioned this book and published it in 2003 as
+\emph{Basic Lisp Techniques}. It has been a free download from their
+website ever since, and it has served many programmers as a quick
+start in the language. The title it was meant to have was
+\emph{Understanding Common Lisp}, and this edition takes that name.
+
+The language has hardly changed since 2003. Common Lisp is defined by
+a standard that was finished in 1994, and a program written to that
+standard then still runs now. What has changed is everything around
+the language. There are several free implementations that compile to
+fast native code. A library manager puts a couple of thousand
+open-source libraries one command away. The editor support that used
+to come with one vendor's product works with every implementation.
+And many of us now write Lisp alongside an AI agent that can evaluate
+code in the same running image we are working in.
+
+The first edition was written around one implementation, Allegro CL.
+This one is written so that the examples run on any Common Lisp. They
+are shown as SBCL prints them, since SBCL is free and is what most
+newcomers install first, and every one of them was run before it went
+into the book.
+
+The book is still short. It is for a working programmer who wants to
+read and write Common Lisp with some confidence in a few sittings, and
+who will go on to the longer books and the reference material after
+that. The first edition ended with a sample application. That chapter
+is gone: there are plenty of real programs to read online now, and
+Chapter~5 says where to find them.
+
+Corrections and improvements are welcome at the address on the
+copyright page.
+
+My thanks to Franz Inc., who asked for the first edition and have kept
+it available for more than twenty years.
+
+\begin{flushright}
+Dave Cooper\\
+\url{https://davecooper.name}
+\end{flushright}
+
 % Foreword
-\chapter*{Foreword\footnote{this Foreword was authored by Franz Inc.}}
-\addcontentsline{toc}{chapter}{Foreword}
+\chapter*{Foreword to the 2003 Edition\footnote{This foreword was written by Franz Inc. for the first edition, and is reprinted as it appeared there.}}
+\addcontentsline{toc}{chapter}{Foreword to the 2003 Edition}
 
 Computers, and the software applications that power them, permeate every facet of our
 daily lives. From groceries to airline reservations to dental appointments, our reliance
@@ -64,7 +124,7 @@ Investors want to see results, fast.
 Common Lisp (CL) is one of the few languages and development options that can meet
 these challenges. Powerful, flexible, changeable on the fly --- increasingly, CL is playing
 a leading role in areas with complex problem-solving demands. Engineers in the fields of
-bioinformatics\index{bioinformatics}, scheduling, data mining\index{data mining}, document management\index{document management}, B2B\index{B2B}, and E-commerce\index{E-commerce}
+bioinformatics, scheduling, data mining, document management, B2B, and E-commerce
 have all turned to CL to complete their applications on time and within budget. CL,
 however, no longer just appropriate for the most complex problems. Applications of modest
 complexity, but with demanding needs for fast development cycles and customization, are
@@ -106,15 +166,6 @@ we believe you will feel the same way.
 \include{chapter5}
 
 \backmatter
-
-% Appendices
-\appendix
-\include{appendixA}
-\include{appendixB}
-\include{appendixC}
-
-% Afterword
-\include{afterword}
 
 \printindex
 

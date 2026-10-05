@@ -1,22 +1,19 @@
 # Makefile for Understanding Common Lisp book
-# 
+#
 # Targets:
 #   all (default) - Build the complete indexed PDF
-#   pdf           - Build PDF without regenerating index
-#   index         - Regenerate the index from existing .idx file
-#   tag-for-index - Run the indexing script to add \index{} tags
-#   clean         - Remove all LaTeX-generated files
-#   distclean     - Remove all generated files including backups
+#   pdf           - One quick LaTeX pass, without regenerating the index
+#   clean         - Remove LaTeX-generated files (keeps the PDF)
+#   distclean     - Remove all generated files including the PDF
 
 # Main LaTeX file
 MAIN = main
 
 # Chapter source files
 CHAPTERS = chapter1.tex chapter2.tex chapter3.tex chapter4.tex chapter5.tex
-APPENDICES = appendixA.tex appendixB.tex appendixC.tex afterword.tex
 
 # All source files
-SOURCES = $(MAIN).tex $(CHAPTERS) $(APPENDICES)
+SOURCES = $(MAIN).tex $(CHAPTERS)
 
 # Generated files
 PDF = $(MAIN).pdf
@@ -30,91 +27,45 @@ ILG = $(MAIN).ilg
 
 # LaTeX compiler
 LATEX = pdflatex
-LATEX_FLAGS = -interaction=nonstopmode
+LATEX_FLAGS = -interaction=nonstopmode -halt-on-error
 
 # Index generator
 MAKEINDEX = makeindex
 
-# Indexing script
-INDEX_SCRIPT = ./add-index-tags.sh
-
-.PHONY: all pdf index tag-for-index clean distclean help
+.PHONY: all pdf clean distclean help
 
 # Default target - build complete indexed PDF
 all: $(PDF)
 
-# Build the PDF with index (runs LaTeX multiple times as needed)
+# Build the PDF with its index: LaTeX, makeindex, then LaTeX twice more
+# so that the index and the cross-references settle.
 $(PDF): $(SOURCES)
-	@echo "Building PDF with index..."
 	$(LATEX) $(LATEX_FLAGS) $(MAIN).tex
-	@if [ -f $(IDX) ]; then \
-		echo "Generating index..."; \
-		$(MAKEINDEX) $(IDX); \
-		echo "Rebuilding with index..."; \
-		$(LATEX) $(LATEX_FLAGS) $(MAIN).tex; \
-		echo "Final pass for cross-references..."; \
-		$(LATEX) $(LATEX_FLAGS) $(MAIN).tex; \
-	else \
-		echo "No index file generated, skipping index generation"; \
-		echo "Second pass for cross-references..."; \
-		$(LATEX) $(LATEX_FLAGS) $(MAIN).tex; \
-	fi
-	@echo "Build complete: $(PDF)"
-
-# Quick rebuild without full index regeneration
-pdf:
-	@echo "Quick PDF rebuild..."
-	$(LATEX) $(LATEX_FLAGS) $(MAIN).tex
-
-# Regenerate index only (assumes .idx already exists)
-index: $(IDX)
-	@echo "Regenerating index..."
 	$(MAKEINDEX) $(IDX)
 	$(LATEX) $(LATEX_FLAGS) $(MAIN).tex
 	$(LATEX) $(LATEX_FLAGS) $(MAIN).tex
+	@echo "Build complete: $(PDF)"
 
-# Run the script to add \index{} tags to source files
-tag-for-index:
-	@echo "Running index tagging script..."
-	@if [ ! -f $(INDEX_SCRIPT) ]; then \
-		echo "Error: $(INDEX_SCRIPT) not found!"; \
-		exit 1; \
-	fi
-	@if [ ! -x $(INDEX_SCRIPT) ]; then \
-		echo "Making script executable..."; \
-		chmod +x $(INDEX_SCRIPT); \
-	fi
-	$(INDEX_SCRIPT)
-	@echo "Index tags added. Source backups created as *.tex.bak"
-	@echo "Run 'make all' to rebuild PDF with new index entries"
+# Quick rebuild without index regeneration
+pdf:
+	$(LATEX) $(LATEX_FLAGS) $(MAIN).tex
 
 # Clean LaTeX-generated files
 clean:
-	@echo "Cleaning LaTeX-generated files..."
 	rm -f $(AUX) $(TOC) $(OUT) $(LOG) $(IDX) $(IND) $(ILG)
-	rm -f $(CHAPTERS:.tex=.aux) $(APPENDICES:.tex=.aux)
-	rm -f *.aux
+	rm -f $(CHAPTERS:.tex=.aux)
 	@echo "Clean complete (PDF preserved)"
 
-# Deep clean - remove everything including PDF and backups
+# Deep clean - remove everything including the PDF
 distclean: clean
-	@echo "Removing all generated files..."
 	rm -f $(PDF)
-	rm -f *.bak
 	@echo "DistClean complete"
 
 # Show available targets
 help:
 	@echo "Available targets:"
-	@echo "  all (default)  - Build complete indexed PDF (runs LaTeX + makeindex)"
-	@echo "  pdf            - Quick rebuild without index regeneration"
-	@echo "  index          - Regenerate index from existing .idx file"
-	@echo "  tag-for-index  - Run script to add \\index{} tags to sources"
+	@echo "  all (default)  - Build complete indexed PDF (LaTeX + makeindex)"
+	@echo "  pdf            - One quick pass, without index regeneration"
 	@echo "  clean          - Remove LaTeX-generated files (keeps PDF)"
-	@echo "  distclean      - Remove all generated files including PDF and backups"
+	@echo "  distclean      - Remove all generated files including PDF"
 	@echo "  help           - Show this help message"
-	@echo ""
-	@echo "Typical workflow:"
-	@echo "  1. make tag-for-index  (add index tags to sources, creates .bak files)"
-	@echo "  2. make all            (build PDF with index)"
-	@echo "  3. make clean          (clean up temporary files)"

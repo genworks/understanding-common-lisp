@@ -1,445 +1,340 @@
 \chapter{Interfaces}
 
-CL provides many mechanisms for interfacing with the ``outside world.'' This chapter will
-introduce some of the more important and practical ones available as part of Allegro CL\index{Allegro CL},
-or as extensions to Allegro CL through third parties. These techniques include:
+A program has to deal with the world outside it: the operating system,
+code written in other languages, the network, databases, the web. The
+Common Lisp standard covers files and streams and stops there. The
+rest is done by libraries, and for each job there is a well-established
+portable one that works the same on every implementation. This
+chapter introduces the ones you are likely to need first.
 
-\begin{itemize}
-\item Direct operating system calls
-\item Foreign Function Interface (FFI) for calling functions written in other languages
-\item CORBA\index{CORBA}
-\item TCP/IP Sockets
-\item Database interfaces
-\item Web Serving
-\end{itemize}
+Each is loaded with Quicklisp, as described in Chapter~2. For
+example:
+
+\begin{verbatim}
+CL-USER> (ql:quickload "cffi")
+\end{verbatim}
+
+\noindent
+The examples below assume you have loaded the library named in each
+section. The commercial implementations also have interfaces of their
+own for most of these things, described in their manuals.
 
 \section{The Operating System}
 
-\subsection{System Calls}
-
-CL provides the function \texttt{excl:run-shell-command} for making direct calls to the operating
-system. Note that the \texttt{excl:} package qualifier is used, meaning that this call is an extension
-to Common Lisp\index{Common Lisp} and is specific to Allegro CL. Other CL platforms provide similar functionality. Calling OS commands directly is generally a convenient way of interfacing with the
-Unix (Linux) operating system or with legacy applications. It is also a quick way to accomplish tasks such as file copying, moving, and deletion without using CL equivalents such
-as \texttt{rename-file} and \texttt{delete-file}.
-
-\texttt{Run-shell-command} takes a string representing the desired command, and any optional
-keyword arguments as specified in the Allegro CL documentation.
+UIOP\index{UIOP} is a library of portable utilities for dealing with the
+operating system. It is part of ASDF, so it is already there. Its
+\code{run-program}\index{run-program@\texttt{run-program}} runs another program and can return what it
+printed:
 
 \begin{verbatim}
-CL-USER(2): (excl:run-shell-command "ls -l")
-total 24
--rwxr-xr-x  1 dcooper users 2863 May  9 14:06 compile-system.cl
--rwxr-xr-x  1 dcooper users 1856 May  8 18:13 example.cl
--rw-r--r--  1 dcooper users  269 May  8 17:48 load-system.cl
--rw-r--r--  1 dcooper users 2152 May  8 18:10 readme.txt
--rwxr-xr-x  1 dcooper users  356 May  8 18:10 start.sh
-0
-CL-USER(3): (excl:run-shell-command "cp readme.txt readme.bak")
+CL-USER> (uiop:run-program '("date" "+%Y")
+                           :output '(:string :stripped t))
+"2026"
+NIL
 0
 \end{verbatim}
 
-\subsection{Environment Variables}
+The three values are the program's output, its error output, which was
+not collected here, and its exit code. Giving the command as a list
+of strings, as above, passes the arguments straight to the program.
+You can also give one string, which is handed to the shell.
 
-To access values from Unix environment variables, you can use the function \texttt{sys:getenv},
-which takes a string representing the name of the environment variable, and returns a string
-representing the current value (or NIL if the variable does not exist):
-
-\begin{verbatim}
-CL-USER(4): (sys:getenv "SHELL")
-"/bin/bash"
-\end{verbatim}
-
-You can also set the value of environment variables using \texttt{setf}\index{setf@\texttt{setf}}:
+Environment variables are read with \code{uiop:getenv}\index{environment variables}, which returns
+\code{nil} if the variable is not set:
 
 \begin{verbatim}
-CL-USER(5): (setf (sys:getenv "MYVAR") "yes")
-"yes"
-CL-USER(6): (sys:getenv "MYVAR")
-"yes"
+CL-USER> (uiop:getenv "HOME")
+"/home/reader"
 \end{verbatim}
 
-\section{Foreign Function Interface}
+UIOP also has functions for the file system, such as
+\code{directory-files}, \code{copy-file}, \code{ensure-directories-exist}
+and \code{read-file-string}. Where a Lisp function will do the job,
+prefer it to running a shell command: it works the same on every
+operating system, and when it fails you get a Lisp condition you can
+handle.
 
-CL provides the capability to call functions written in other languages, most notably the C
-language. Each CL platform provides its own Foreign Function Interface (``FFI''), and the
-details of this are unfortunately not standardized between platforms. To learn the details
-of FFI for Allegro CL, you should consult Allegro CL's documentation.
+\section{Foreign Functions}
 
-In general, the steps involved in calling foreign functions from CL are:
+Most operating systems and a great many libraries present their
+interface as C functions. CFFI\index{CFFI}, the Common Foreign Function
+Interface (\url{https://cffi.common-lisp.dev}), lets Lisp call
+them. The steps are:
 
 \begin{enumerate}
-\item Define the Lisp names and types for the C functions and any supporting data structures
+\item Load the shared library that contains the functions (a
+\code{.so} file on Linux, \code{.dylib} on macOS, \code{.dll} on
+Windows). The C standard library is already loaded.
 
-\item Load the shared library (\texttt{.so} file on Unix/Linux, or \texttt{.dll} on Windows) which contains
-the compiled object code for the functions
+\item Tell Lisp the name of each function and the types of its
+arguments and result.
 
-\item Call the functions
+\item Call it.
 \end{enumerate}
 
-The FFI capability is extremely useful for ``wrapping'' existing libraries of C code, and/or
-for giving CL applications convenient access to low-level system calls. The Franz Inc. website
-contains documentation for a large library of Unix system calls which are pre-wrapped and
-available from CL.
+For a single call, \code{foreign-funcall} does the last two steps at
+once. Here is the C function \code{strlen}:
 
-\section{CORBA}
+\begin{verbatim}
+CL-USER> (cffi:foreign-funcall "strlen" :string "Hello, C!" :size)
+9
+\end{verbatim}
 
-CORBA\footnote{CORBA stands for Common Object Request Broker Architecture} is a standard for writing distributed object-oriented applications which
-can communicate over a network. A CORBA-wrapped application can be written in any
-language which supports CORBA. These applications can then communicate with each
-other, regardless of the language in which they are written.
+The arguments come in pairs of a type and a value, and the type of
+the result comes last. To make a C function callable like a Lisp
+function, define it once with \code{defcfun}\index{defcfun@\texttt{defcfun}}:
 
-CorbaLink is a CORBA implementation for Allegro CL, available through Franz Inc. or
-through third parties. Information on CORBA in general can be found at the Object Management Group's website, http://www.omg.org. By using CorbaLink, CL applications can
-communicate in a seamless manner with applications written in other CORBA-supporting
-languages such as C++, Java, Smalltalk, and others.
+\begin{verbatim}
+CL-USER> (cffi:defcfun ("getpid" process-id) :int)
+PROCESS-ID
+CL-USER> (process-id)
+4242
+\end{verbatim}
+
+A great many C libraries have already been wrapped this way and are
+in Quicklisp, so look there before you write your own.
+
+\section{Threads}
+
+Every current implementation can run several threads\index{threads} at once. Each
+has its own functions for this, and the Bordeaux Threads\index{Bordeaux Threads} library puts
+one interface over all of them. Its current interface is in the
+package \code{bt2}:
+
+\begin{verbatim}
+(defparameter *counter* 0)
+(defparameter *lock* (bt2:make-lock))
+
+(defun count-up (times)
+  (dotimes (n times)
+    (bt2:with-lock-held (*lock*)
+      (incf *counter*))))
+\end{verbatim}
+
+\begin{verbatim}
+CL-USER> (let ((threads (loop repeat 4
+                              collect (bt2:make-thread
+                                       (lambda () (count-up 100000))))))
+           (mapc #'bt2:join-thread threads)
+           *counter*)
+400000
+\end{verbatim}
+
+Four threads each add to the counter a hundred thousand times.
+\code{Join-thread} waits for a thread to finish. The lock makes sure
+that only one thread changes the counter at a time; without it, some
+of the additions would be lost. All the threads share the same
+memory, so data that more than one of them changes needs a lock.
+
+A dynamic binding made with \code{let} in one thread, on the other
+hand, is seen only by that thread, as Chapter~3 mentioned.
 
 \section{TCP/IP Sockets}
 
-TCP/IP provides a standard for communication over a network. Most Internet communication is done via TCP/IP. Both servers and clients can be written which use TCP/IP as the
-underlying protocol.
+The \code{usocket}\index{usocket} library gives portable access to network
+sockets\index{sockets}. A connected socket gives you a stream, and you read and write
+it with the same functions as a file.
 
-In Allegro CL, the package \texttt{socket} provides CL-level functions which enable the use of
-TCP/IP. As a simple example, we will show how to write both a client and a server which
-can exchange data using TCP/IP sockets. These two programs can communicate when both
-running on the same machine, or they can run on separate machines anywhere on a TCP/IP
-network.
-
-First we write the server\footnote{For space considerations we are not handling errors or trying to support multiple connections simultaneously.
-See the Allegro CL documentation for socket examples which do provide full error-handling and simultaneous
-connection support.}:
+Here is a server that accepts one connection, reads a line from it,
+sends an answer, and closes:
 
 \begin{verbatim}
-(in-package :user)
-
-(defparameter *socket-server-port* 4444)
-
-(defun open-server ()
-  (socket:make-socket :connect :passive
-                      :local-port *socket-server-port*))
-
-(defun test-socket-server ()
-  (let ((socket (open-server)))
+(defun serve-once (port)
+  (let ((listener (usocket:socket-listen "127.0.0.1" port
+                                         :reuse-address t)))
     (unwind-protect
-        (let ((stream (socket:accept-connection socket)))
-          (let ((command (read stream)))
-            (cond ((eql command :hello)
-                   (format stream "Hello to you!~%")
-                   (finish-output stream))
-                  ((eql command :add-1-2)
-                   (format stream "~a~%" (+ 1 2))
-                   (finish-output stream))
-                  (t (format stream "Sorry, I don't understand~%")
-                     (finish-output stream))))
-          (close stream))
-      (close socket))))
+         (let* ((connection (usocket:socket-accept listener))
+                (stream (usocket:socket-stream connection)))
+           (unwind-protect
+                (let ((command (read-line stream)))
+                  (format stream "You said: ~a~%" command)
+                  (finish-output stream))
+             (usocket:socket-close connection)))
+      (usocket:socket-close listener))))
 \end{verbatim}
 
-Now we write a simple client, which will contact the server, send a command, and print
-out the response:
+\noindent
+and a client that connects, sends a line, and returns the reply:
 
 \begin{verbatim}
-(in-package :user)
-
-(defparameter *socket-server-port* 4444)
-
-(defun test-socket-client (command)
-  (let ((socket (socket:make-socket :remote-host "localhost"
-                                    :remote-port *socket-server-port*)))
+(defun ask (port message)
+  (let* ((socket (usocket:socket-connect "127.0.0.1" port))
+         (stream (usocket:socket-stream socket)))
     (unwind-protect
-        (progn
-          (format socket "~s~%" command)
-          (finish-output socket)
-          (format t "~a~%" (read-line socket)))
-      (close socket))))
+         (progn
+           (write-line message stream)
+           (finish-output stream)
+           (read-line stream))
+      (usocket:socket-close socket))))
 \end{verbatim}
 
-To test the server and client, start two CL processes. Load the server code into one process,
-and call
+To try them in one Lisp, run the server in a thread of its own, since
+it waits for a connection:
 
 \begin{verbatim}
-(test-socket-server)
+CL-USER> (bt2:make-thread (lambda () (serve-once 4444)))
+#<BT2:THREAD "Unknown thread 4" {1206502383}>
+CL-USER> (ask 4444 "hello")
+"You said: hello"
+NIL
 \end{verbatim}
 
-in that process. Load the client code into the other process, and call
+They would work just as well in two Lisps on two machines, with the
+server's address in place of \code{127.0.0.1}. The calls to
+\code{finish-output} matter: output to a socket is buffered, and
+nothing is sent until the buffer fills or you ask. The
+\code{unwind-protect} forms make sure that the sockets are closed
+whatever happens.
+
+A real server would handle many connections and deal with errors.
+For the usual protocols you will not write that yourself. The next
+sections use libraries built on top of sockets.
+
+\section{JSON}
+
+Much of the data that programs exchange is JSON\index{JSON}. Several libraries
+read and write it. One good current choice is \code{jzon}, loaded
+as \code{com.inuoe.jzon}. A package name that long is a case for the
+local nicknames of Section~\ref{sec:packages}; here we write it out.
 
 \begin{verbatim}
-(test-socket-client :hello)
+CL-USER> (defparameter *city*
+           (com.inuoe.jzon:parse
+            "{\"name\": \"Detroit\", \"tags\": [\"motor\", \"music\"]}"))
+*CITY*
+CL-USER> (gethash "name" *city*)
+"Detroit"
+T
+CL-USER> (gethash "tags" *city*)
+#("motor" "music")
+T
 \end{verbatim}
 
-in that process. In the client, you should see the response from the server printed out. In
-the server, you should see the server return from the function call (since the server, as it is
-written, only serves one request, then exits). Note that you could change ``localhost'' in the
-definition of \texttt{test-socket-client} to any machine name on your network, and the client
-and server could communicate with each other between different machines.
+A JSON object becomes a hash table with string keys, and a JSON array
+becomes a vector. \code{Stringify} goes the other way:
 
-Also note that both the \texttt{socket:make-socket} and \texttt{socket:accept-connection} functions accept several optional keyword parameters, which are documented in Allegro CL's
-online and hardcopy manuals.
+\begin{verbatim}
+CL-USER> (com.inuoe.jzon:stringify (list 1 2 "three"))
+"[1,2,\"three\"]"
+\end{verbatim}
 
 \section{Databases}
 
-Allegro CL provides connectivity to many SQL-based database systems, such as Oracle,
-MySQL, PostgreSQL, Sybase and ODBC-compliant databases. Information on these packages, as well as more general information on accessing relational databases from CL, can be
-found at
-
-\begin{center}
-\texttt{http://opensource.franz.com}
-\end{center}
-
-As a short example of database access from CL, we will present code for creating a table,
-adding some data to it, and querying the data with MySQL (which is a free open-source
-database server available on several platforms including Unix, Linux, and Windows).
+There are libraries for all the common database\index{databases} systems, among them
+Postmodern for PostgreSQL, \code{cl-mysql}, and \code{cl-dbi}, which
+gives one interface to several. The simplest to try is SQLite, which
+keeps a whole database in one file and needs no server. The Lisp
+library is called \code{sqlite}, and it uses the SQLite C library,
+which must be installed on your machine.
 
 \begin{verbatim}
-(in-package :user)
-
-(require :mysql)
-
-(use-package :dbi.mysql)
-
-(defun test-mysql ()
-  (let ((db (connect "localhost" "testdb" "testuser" "testpasswd")))
-    (sql db "create table captable (id int, name char(30))")
-    (sql db "insert into captable values (~d, '~a')" 1 "Chicago")
-    (sql db "insert into captable values (~d, '~a')" 2 "Austin")
-    (sql db "insert into captable values (~d, '~a')" 3 "Philadelphia")
-    (dolist (row (sql db "select * from captable where id > 1" :types :auto))
-      (format t "~a: ~a~%" (first row) (second row)))
-    (sql db "drop table captable")
-    (disconnect db)))
+CL-USER> (defparameter *db* (sqlite:connect ":memory:"))
+*DB*
+CL-USER> (sqlite:execute-non-query *db*
+           "create table capitals (state text, city text)")
+NIL
+CL-USER> (sqlite:execute-non-query *db*
+           "insert into capitals values (?, ?)" "Michigan" "Lansing")
+NIL
+CL-USER> (sqlite:execute-non-query *db*
+           "insert into capitals values (?, ?)" "Illinois" "Springfield")
+NIL
+CL-USER> (sqlite:execute-to-list *db*
+           "select * from capitals order by state")
+(("Illinois" "Springfield") ("Michigan" "Lansing"))
+CL-USER> (sqlite:execute-single *db*
+           "select city from capitals where state = ?" "Michigan")
+"Lansing"
+CL-USER> (sqlite:disconnect *db*)
 \end{verbatim}
 
-In the above example, ``testdb'' is the name of a database which must exist on the MySQL
-server running on ``localhost,'' and ``testuser'' is a MySQL username which must have the
-proper access privileges to the database (``testpasswd'' is the password).
+The name \code{":memory:"} asks for a temporary database in memory;
+give a file name to keep one on disk. Each row comes back as a list.
+Always pass values to a query through the question-mark placeholders,
+as here, and never by pasting them into the SQL text. That is what
+keeps hostile input from being run as SQL.
 
-Upon calling \texttt{(test-mysql)}, we expect to see the following output:
+\section{Web Serving}
+
+A web server\index{web serving} written in Lisp runs inside your Lisp image. That has a
+pleasant consequence: all of the program's state is right there in
+memory between requests, and you can redefine the function behind a
+page while the server is running and see the change on the next
+request.
+
+Hunchentoot\index{Hunchentoot} (\url{https://edicl.github.io/hunchentoot/}) is a
+widely used web server library. Start a server on a port:
 
 \begin{verbatim}
-2: Austin
-3: Philadelphia
+CL-USER> (defparameter *server*
+           (hunchentoot:start
+            (make-instance 'hunchentoot:easy-acceptor :port 8000)))
+*SERVER*
 \end{verbatim}
 
-\section{Webserving}
-
-Most CL vendors either provide direct support or provide third-party support for serving web
-content through their CL environments. For Allegro CL, Franz Inc. provides AllegroServe
-(``aserve''), a full-featured web application server. Applications built with aserve can provide
-all the benefits of traditional web applications, with the additional advantage that all state
-can be maintained in the running CL session. For traditional web applications, a new process
-must typically be started for each connection; this leads to an inherent inefficiency since all
-the application state must be fetched from a database or from persistent files every time.
-
-AllegroServe can be obtained from
-
-\begin{center}
-\texttt{http://opensource.franz.com}
-\end{center}
-
-and is distributed under an open-source (LLGPL\footnote{LLGPL is the Lisp Lesser General Public License}) license.
-
-\subsection{Publishing Static Pages}
-
-To start the webserver, you use the function \texttt{net.aserve:start}. It takes several keyword
-arguments. The only argument required is \texttt{:port}, which specifies the port number that
-the server should listen on. The default HTTP port is 80. If you are running as a normal
-(non-root) user on Unix/Linux, you will probably not have permission to run on port 80, so
-you should choose a number above 1024 and note it for use in forming your URLs. ``8000''
-is a traditional ``high port'' default for running webservers. The URL for your webserver
-will then appear as \texttt{http://localhost:8000/} (of course replacing 8000 with whatever
-port number you actually use).
-
-In order to serve a simple plain HTML (i.e. static) page from a file, the function is
-\texttt{publish-file}:
+\noindent
+and define a page:
 
 \begin{verbatim}
-(net.aserve:start :port 8000)
-
-(publish-file :path "/welcome.html" :file "/tmp/welcome.html")
+(hunchentoot:define-easy-handler (hello :uri "/hello")
+    ((name :init-form "World"))
+  (setf (hunchentoot:content-type*) "text/plain")
+  (format nil "Hello, ~a!" name))
 \end{verbatim}
 
-The \texttt{:path} argument gives the URL path, while the \texttt{:file} argument gives the name in
-the Unix (or Windows) filesystem where the file actually resides.
+Now visit \url{http://localhost:8000/hello} in your browser and you
+will see ``Hello, World!'' The handler is a function. Whatever it
+returns is sent to the browser. The parameter \code{name} is filled
+in from the request, so \url{http://localhost:8000/hello?name=Lisp}
+answers ``Hello, Lisp!'' The same parameter is filled in from a
+posted form.
 
-To test the above example, create a simple HTML file and place it in \texttt{/tmp/welcome.html}
-(or use the \texttt{:file} argument with a different location as appropriate). A simple HTML file
-might look like this:
+\textbf{Try it:} With the server running, change the greeting in the
+handler, evaluate the definition again, and reload the page.
+
+You can make requests from Lisp as well. Dexador and Drakma are HTTP
+client libraries:
 
 \begin{verbatim}
-<html>
-  <head>
-    <title>Welcome</title>
-  </head>
-  <body>
-    <h2>Welcome to my Web Page!</h2>
-  </body>
-</html>
+CL-USER> (dexador:get "http://localhost:8000/hello?name=Lisp")
+"Hello, Lisp!"
+200
+...
 \end{verbatim}
 
-Now, start your web browser and visit the page \texttt{http://localhost:8000/welcome.html}.
-You should see the web page come up in the browser.
+\noindent
+The first two values are the body of the response and the HTTP status
+code. To stop the server, call \code{(hunchentoot:stop *server*)}.
 
-\subsection{Publishing Dynamic Pages}
-
-Dynamic web page serving is more interesting, since a function is called to generate the
-HTML content on-the-fly. This function can tap into the entire running CL environment,
-to query data structures, call external databases, etc. Here is an example:
-
-\begin{verbatim}
-(publish :path "/hello"
-         :content-type "text/html"
-         :function
-         #'(lambda(req ent)
-             (with-http-response (req ent)
-               (with-http-body (req ent)
-                 (html (:html
-                        (:head (:title "Hello Page"))
-                        (:body
-                         ((:font :color "red")
-                          (:h2 "Hello There!")))))))))
-\end{verbatim}
-
-To test the above example, visit the URL \texttt{http://localhost:8000/hello} in your browser.
-You should see the heading ``Hello There!'' in red in your browser window.
-
-You should also see in your CL console that some information is being logged on each
-visit to the page.
-
-Note the use of the \texttt{html} macro, which works somewhat like the \texttt{format}\index{format@\texttt{format}} function. It
-takes a series of HTML ``tags'' represented as lists --- the first element of each list is a
-keyword symbol representing the ``name'' of the tag, and the rest of the list are either
-strings representing actual content, or more nested lists, or both.
-
-\subsection{Query Parameters}
-
-Query parameters are named values which can be spliced into a URL to pass data into
-the page. Within AllegroServe they can be accessed with the \texttt{request-query-value}
-function. As an example, consider the following \texttt{publish} form:
-
-\begin{verbatim}
-(publish :path "/welcome"
-         :content-type "text/html"
-         :function
-         #'(lambda(req ent)
-             (with-http-response (req ent)
-               (with-http-body (req ent)
-                 (let ((name (or (request-query-value "name" req)
-                                 "Pal")))
-                   (html (:html
-                          (:head (:title "Welcome Page"))
-                          (:body
-                           ((:font :color "red")
-                            (:h2 "Welcome, " (:princ name) "!"))))))))))
-\end{verbatim}
-
-To test this, visit \texttt{http://localhost:8000/welcome?name=Joe} in your browser. You should
-see the heading ``Welcome, Joe!'' in the browser window.
-
-\subsection{Form Parameters}
-
-Query parameters are typically used for small amounts of data. For larger amounts of data,
-you will probably want to use HTML form parameters. These are generally filled in by a
-user through an interactive HTML form. To demonstrate the server side of such interaction,
-we will use the \texttt{curl} Unix command to simulate the posting of form data to a published
-aserve page.
-
-Here is a \texttt{publish} form which can accept two form parameters named ``color'' and
-``shape'':
-
-\begin{verbatim}
-(publish :path "/form-test"
-         :content-type "text/html"
-         :function
-         #'(lambda(req ent)
-             (with-http-response (req ent)
-               (with-http-body (req ent)
-                 (let ((color (request-query-value "color" req))
-                       (shape (request-query-value "shape" req)))
-                   (html (:html
-                          (:head (:title "Form Test"))
-                          (:body
-                           (:h2 "You posted:")
-                           (:princ (format nil "Color: ~a~%" color))
-                           (:br)
-                           (:princ (format nil "Shape: ~a" shape))))))))))
-\end{verbatim}
-
-Now, from a Unix terminal window, type the following command:
-
-\begin{verbatim}
-curl --data "color=red&shape=circle" http://localhost:8000/form-test
-\end{verbatim}
-
-You should see the following HTML printed on your console:
-
-\begin{verbatim}
-<html><head><title>Form Test</title></head>
-<body><h2>You posted:</h2>Color: red<br />Shape: circle</body></html>
-\end{verbatim}
-
-Note that \texttt{request-query-value} can be used to retrieve both URL-encoded query parameters and form parameters --- aserve makes these available through the same interface.
-
-\subsection{Multipart Form Data and File Uploads}
-
-In order to handle binary files which are uploaded to the server, aserve provides the function
-\texttt{get-multipart-content}. Combined with the AllegroServe documentation and/or the
-aserve source code, this should be enough to get you started with handling uploaded files.
-
-\subsection{Development and Production Modes}
-
-AllegroServe has a concept of ``development'' and ``production'' mode which can be switched
-with the \texttt{:debug} keyword argument. In debug mode, when an error is detected the handler
-will stop with a break (see Section 2.8.3). This is usually convenient for development. In
-production mode, on the other hand, aserve will simply output a standard HTTP error
-response back to the browser and will not stop the server process.
-
-The default debug setting for aserve is production mode. For development, you will
-typically want to start aserve with:
-
-\begin{verbatim}
-(net.aserve:start :port 8000 :debug t)
-\end{verbatim}
-
-\subsection{Other Features}
-
-This chapter has barely scratched the surface of what is available in AllegroServe. For a
-complete treatment, see the documentation available at the AllegroServe website listed above.
-Additional capabilities of note include:
-
-\begin{itemize}
-\item Authorization and security
-\item Support for SSL (Secure Sockets Layer)
-\item HTTP proxying
-\item Virtual hosting (multiple hostnames and DNS names being served by the same physical
-server)
-\item Support for client-side HTTP from CL
-\item Support for internationalization (international character sets) in URLs
-\item Support for serving WebDAV (Web-based Distributed Authoring and Versioning)
-\end{itemize}
+To produce HTML you can use \code{format}, or better, one of the
+libraries that write HTML from Lisp lists, such as Spinneret or
+CL-WHO. For larger applications there are frameworks built on these
+pieces. Hunchentoot is not the only server: Franz's AllegroServe, used
+in the first edition of this book, is open source and runs on several
+implementations, and Clack and Woo are other popular choices.
 
 \section{Embedded Languages}
 
-This section applies to layered application development. In particular, we cover the concept
-of an Embedded Language: a collection of macros and functions which add primitives and
-other key operators to CL, effectively creating a ``language on top of CL.''
+Chapter~3 showed that macros let you add operators to Common Lisp.
+Carried further, a set of macros and functions becomes a language in
+its own right for some kind of problem, sitting on top of CL. This is
+called an \emph{embedded language}\index{embedded languages}, or a domain-specific language.
+The \code{loop} macro and the HTML libraries just mentioned are small
+ones.
 
-An example of this is GDL (Generative Design Language), which is the open-source
-core of the Genworks\textregistered{} GDL commercial product. GDL is a general-purpose language
-for Knowledge-Based Engineering, and is a significant superset of ANSI CL. Objects in
-GDL are similar to CLOS\index{CLOS} objects, but add features such as cached demand-driven behavior,
-automatic dependency tracking, and optional default values for unspecified data. GDL adds
-new primitives to CL, such as the \texttt{define-object} operator, which is analogous to CLOS's
-\texttt{defclass}\index{defclass@\texttt{defclass}}.
+A larger example is Gendl\index{Gendl} (\url{https://gendl.org}), an open-source
+language for engineering and design applications. Its main operator,
+\code{define-object}, is to Gendl what \code{defclass} is to CLOS.
+The objects it defines compute their values on demand, remember them,
+and keep track of what depends on what, so that when an input changes,
+whatever was computed from it is worked out again the next time it is
+asked for. A Gendl program is still a Common Lisp program. It is
+compiled by the same compiler, loaded with ASDF, and developed at the
+same REPL, with all of CL available inside it.
 
-For layered applications and embedded languages, CL provides an environment unmatched
-by other current languages. Because CL allows macros to generate other macros, and the
-Lisp code can compute and generate Lisp code at all levels, it is straightforward to build
-extremely high-level languages on top of CL. And because of the CL-based syntax, these
-layered languages integrate seamlessly into the underlying CL environment.
-
-\section{Conclusion}
-
-Chapter 4 has provided a brief introduction into some of the interfacing capabilities available
-in CL. For additional information on any of these topics, you should refer to the on-line
-and printed documentation from Franz Inc., as well as to various resources available on the
-Web.
+That is the general pattern. Because the embedded language is made of
+ordinary macros, it needs no parser, no separate compiler and no
+bridge to the host language, and its users keep the whole of Common
+Lisp. Building a language up toward the problem, until the program
+says what it means in the problem's own terms, is the style of
+programming that Lisp was designed for.

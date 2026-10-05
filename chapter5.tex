@@ -1,423 +1,100 @@
-\chapter{The Squeakymail Example}
+\chapter{Where to Go Next}
 
-This chapter will present a simple yet complete Common Lisp\index{Common Lisp} application. The application
-is a web-based email client, called ``Squeakymail,'' which can be used for reading, composing,
-sending, and managing email through a web browser. The complete code for this example
-can be downloaded from
+This book has covered the ground you need in order to start. Here is
+where to go for the rest.
 
-\begin{center}
-\texttt{http://www.genworks.com/downloads}
-\end{center}
-
-In this chapter, we will give an overview of the application with excerpts from the source
-code, to help tie together the concepts covered in earlier chapters. This example is intended
-to give a flavor of working with CL on a real application.
-
-\section{Requirements and Design Overview}
-
-The basic requirements for this application are the following:
+\section{Reference}
 
 \begin{itemize}
-\item Must be accessible from any web browser
-\item Must handle POP3 mailboxes
-\item Should allow the viewing of mail messages
-\item Should allow the composition and sending of mail
-\item Should allow the deletion and management of messages
+\item \textbf{The Common Lisp HyperSpec}\index{HyperSpec},
+\url{https://www.lispworks.com/documentation/HyperSpec/Front/index.htm}. The
+text of the standard as a hypertext document. It is the final word on
+what any standard function does. It is written for implementers, and
+its entries are worth learning to read. Your editor can open the
+entry for the name at the cursor.
+
+\item \textbf{The Common Lisp Cookbook}\index{Cookbook}, at\\
+\url{https://lispcookbook.github.io/cl-cookbook/}. Task-oriented
+chapters on strings, files, dates, regular expressions, testing, web
+development, and much else, kept up to date by the community. This is
+the best next stop after this book.
+
+\item \textbf{The manual for your implementation.} Each one documents
+its extensions, its compiler, its debugger and its profiler. SBCL's
+is at \url{https://www.sbcl.org/manual/}.
+
+\item \textbf{The ASDF manual}, \url{https://asdf.common-lisp.dev},
+for everything about defining and building systems.
 \end{itemize}
 
-Fortunately, Franz Inc. provides a free open-source library for handling POP3 email and
-for composing and sending mail. This library can also be downloaded from the above URL.
-
-The webserver will use AllegroServe, as introduced in Chapter 4. The overall design
-breaks down as follows:
-
-\begin{enumerate}
-\item The AllegroServe session will store a list of messages in a global parameter
-\item A background thread will periodically poll the POP3 server and update the list with
-any new mail
-\item The web interface will provide pages to view the list of messages, to read the content
-of individual messages, and to compose and send new mail
-\item Sufficient security will be in place to prevent multiple users of the application from
-reading each other's email
-\end{enumerate}
-
-\section{Main Application File}
-
-The main file for the application looks like this:
-
-\begin{verbatim}
-(in-package :user)
-
-(defparameter *squeaky-port* 9876)
-
-(defparameter *imap-server* "localhost")
-(defparameter *pop-server* "localhost")
-(defparameter *smtp-server* "localhost")
-
-(defparameter *username* (sys:user-name))
-
-(defparameter *poll-interval* 30)
-
-(defun start-squeaky (&key (port *squeaky-port*))
-  (start-server port)
-  (start-background-polling))
-
-(defun stop-squeaky ()
-  (stop-background-polling)
-  (stop-server))
-\end{verbatim}
-
-The function \texttt{start-squeaky} starts the webserver and kicks off a background thread to
-poll the mailbox server for new mail. The \texttt{stop-squeaky} function stops this background
-thread and shuts down the webserver.
-
-\section{Working With Global State}
-
-Because the web application runs in a persistent CL session, the entire program state can
-be maintained in memory for fast and convenient access. No need to maintain state in a
-database or in some transient or persistent file system.
-
-For this application, we maintain the state in three main global variables:
-
-\begin{verbatim}
-(defparameter *lock* (mp:make-process-lock))
-
-(defparameter *messages* nil)
-
-(defparameter *pollingp* nil)
-\end{verbatim}
-
-The \texttt{*lock*} variable is a process lock, used for controlling access to the \texttt{*messages*} list
-in a multi-threaded environment. The \texttt{*messages*} variable contains a list of mail-message
-objects. The \texttt{*pollingp*} variable serves as a Boolean flag indicating whether the background
-polling process is currently running.
-
-\section{Background Polling}
-
-The \texttt{start-background-polling} and \texttt{stop-background-polling} functions spawn and
-halt a background thread which periodically polls for new mail:
-
-\begin{verbatim}
-(defun start-background-polling ()
-  (setq *pollingp* t)
-  (mp:process-run-function "Polling Process"
-    #'polling-function))
-
-(defun stop-background-polling ()
-  (setq *pollingp* nil))
-
-(defun polling-function ()
-  (do () ((not *pollingp*))
-    (update-messages-from-server)
-    (sleep *poll-interval*)))
-\end{verbatim}
-
-The call to \texttt{mp:process-run-function} spawns a new operating system thread. This function takes a name for the thread, and a function which the thread should invoke. The
-polling thread simply calls the \texttt{update-messages-from-server} function in a loop, waiting \texttt{*poll-interval*} seconds between each iteration.
-
-The \texttt{update-messages-from-server} function is the function which actually contacts
-the POP3 server:
-
-\begin{verbatim}
-(defun update-messages-from-server ()
-  (mp:with-process-lock (*lock*)
-    (let ((count (ignore-errors (pop:pop-message-count *pop-server*
-                                                       *username*))))
-      (when (and count (numberp count))
-        (dotimes (n count)
-          (unless (find n *messages* :key #'message-number)
-            (let ((message (retrieve-message (1+ n))))
-              (push message *messages*))))))))
-\end{verbatim}
-
-The \texttt{mp:with-process-lock} macro ensures that only one thread at a time can be accessing
-and modifying the \texttt{*messages*} list.
-
-The \texttt{pop:pop-message-count} function returns the number of messages currently waiting on the server for the given username. The username in this example defaults to the
-Unix login name for the user running the CL session. You will have to ensure that you can
-authenticate yourself to your POP3 server with this username.
-
-If there are messages on the server which are not yet in the \texttt{*messages*} list, they are
-retrieved and added to the list. The details of the \texttt{retrieve-message} function, which
-wraps the calls to retrieve the actual message, are not shown.
-
-\section{Serving the Web Pages}
-
-The application provides three main web pages:
-
-\begin{enumerate}
-\item Index --- shows a list of the available messages, with links to read them
-\item Read --- shows the content of an individual message
-\item Compose --- allows the user to compose and send a new message
-\end{enumerate}
-
-Here is the function which publishes the main index page:
-
-\begin{verbatim}
-(publish :path "/squeaky"
-         :content-type "text/html"
-         :function
-         #'(lambda (req ent)
-             (with-http-response (req ent)
-               (with-http-body (req ent)
-                 (html
-                  (:html
-                   (:head (:title "Squeakymail"))
-                   (:body
-                    (:h1 "Your Mail")
-                    ((:form :method "post" :action "/squeaky/compose")
-                     ((:input :type "submit" :value "Compose New")))
-                    (:hr)
-                    (if *messages*
-                        (html
-                         ((:table :border 1)
-                          (:tr (:th "Number") (:th "From")
-                               (:th "Subject") (:th "Date"))
-                          (dolist (message (reverse *messages*))
-                            (html
-                             (:tr
-                              (:td ((:a :href
-                                     (format nil "/squeaky/read?number=~a"
-                                             (message-number message)))
-                                    (:princ (message-number message))))
-                              (:td (:princ (message-from message)))
-                              (:td (:princ (message-subject message)))
-                              (:td (:princ (message-date message))))))))
-                        (html (:i "No messages")))
-                    (:hr))))))))
-\end{verbatim}
-
-This function uses the \texttt{html} macro from AllegroServe to generate the HTML content
-dynamically. The page includes a button to compose new mail, and a table showing all the
-messages currently in the \texttt{*messages*} list. Each message number is a hyperlink to read that
-particular message.
-
-The ``read'' page is published in a similar manner:
-
-\begin{verbatim}
-(publish :path "/squeaky/read"
-         :content-type "text/html"
-         :function
-         #'(lambda (req ent)
-             (let* ((number-string (request-query-value "number" req))
-                    (number (when number-string
-                              (ignore-errors (parse-integer number-string))))
-                    (message (when number
-                               (find number *messages*
-                                     :key #'message-number))))
-               (with-http-response (req ent)
-                 (with-http-body (req ent)
-                   (if message
-                       (html
-                        (:html
-                         (:head (:title "Read Mail"))
-                         (:body
-                          (:h2 "Message " (:princ number))
-                          (:b "From: ") (:princ (message-from message)) (:br)
-                          (:b "Subject: ") (:princ (message-subject message))
-                          (:br)
-                          (:b "Date: ") (:princ (message-date message)) (:br)
-                          (:hr)
-                          (:pre (:princ (message-body message)))
-                          (:hr)
-                          ((:form :method "post" :action "/squeaky/delete")
-                           ((:input :type "hidden" :name "number"
-                                    :value (format nil "~a" number)))
-                           ((:input :type "submit" :value "Delete")))
-                          ((:a :href "/squeaky") "Back to Index"))))
-                       (html
-                        (:html
-                         (:head (:title "Error"))
-                         (:body
-                          (:h2 "Message not found")
-                          ((:a :href "/squeaky") "Back to Index"))))))))))
-\end{verbatim}
-
-This page retrieves the message number from the query string, finds the corresponding
-message in the \texttt{*messages*} list, and displays its content. It also provides a button to
-delete the message and a link back to the main index.
-
-\section{Composing and Sending Mail}
-
-The compose page is slightly more complex, as it needs to handle both displaying a blank
-form and processing the submitted form data:
-
-\begin{verbatim}
-(publish :path "/squeaky/compose"
-         :content-type "text/html"
-         :function
-         #'(lambda (req ent)
-             (let ((to (request-query-value "to" req))
-                   (subject (request-query-value "subject" req))
-                   (body (request-query-value "body" req)))
-               (with-http-response (req ent)
-                 (with-http-body (req ent)
-                   (if (and to subject body)
-                       (progn
-                         (send-smtp-mail *smtp-server* *username*
-                                        to subject body)
-                         (html
-                          (:html
-                           (:head (:title "Message Sent"))
-                           (:body
-                            (:h2 "Your message has been sent")
-                            ((:a :href "/squeaky") "Back to Index")))))
-                       (html
-                        (:html
-                         (:head (:title "Compose Mail"))
-                         (:body
-                          (:h2 "Compose New Message")
-                          ((:form :method "post" :action "/squeaky/compose")
-                           (:b "To: ")
-                           ((:input :type "text" :name "to" :size 40)) (:br)
-                           (:b "Subject: ")
-                           ((:input :type "text" :name "subject" :size 40))
-                           (:br) (:br)
-                           ((:textarea :name "body" :rows 20 :cols 60))
-                           (:br) (:br)
-                           ((:input :type "submit" :value "Send"))
-                           "&nbsp;&nbsp;"
-                           ((:input :type "button" :value "Cancel"
-                                    :onclick "window.location='/squeaky'")))
-                          (:hr)))))))))))
-\end{verbatim}
-
-If the form has been submitted (i.e., if the ``to,'' ``subject,'' and ``body'' parameters are present),
-the \texttt{send-smtp-mail} function is called to send the message. Otherwise, a blank form is
-displayed.
-
-\section{Deleting Messages}
-
-The delete function removes a message from the local list and also deletes it from the POP3
-server:
-
-\begin{verbatim}
-(publish :path "/squeaky/delete"
-         :content-type "text/html"
-         :function
-         #'(lambda (req ent)
-             (let* ((number-string (request-query-value "number" req))
-                    (number (when number-string
-                              (ignore-errors (parse-integer number-string)))))
-               (when number
-                 (mp:with-process-lock (*lock*)
-                   (setq *messages* (remove number *messages*
-                                           :key #'message-number))
-                   (ignore-errors
-                     (pop:delete-letter *pop-server* *username* number))))
-               (with-http-response (req ent)
-                 (with-http-body (req ent)
-                   (html
-                    (:html
-                     (:head (:title "Message Deleted"))
-                     (:body
-                      (:h2 "Message has been deleted")
-                      ((:a :href "/squeaky") "Back to Index")))))))))
-\end{verbatim}
-
-Note the use of \texttt{mp:with-process-lock} to ensure thread-safe modification of the \texttt{*messages*}
-list.
-
-\section{Starting the Webserver}
-
-The \texttt{start-server} and \texttt{stop-server} functions are simple wrappers around the AllegroServe functions:
-
-\begin{verbatim}
-(defun start-server (port)
-  (net.aserve:start :port port))
-
-(defun stop-server ()
-  (net.aserve:shutdown))
-\end{verbatim}
-
-\section{Message Data Structure}
-
-The application uses a simple structure to represent mail messages:
-
-\begin{verbatim}
-(defstruct message
-  number
-  from
-  subject
-  date
-  body)
-\end{verbatim}
-
-The \texttt{defstruct}\index{defstruct@\texttt{defstruct}} macro automatically creates constructor, accessor, and type-predicate functions for this structure.
-
-\section{Testing the Application}
-
-To test Squeakymail, you will need:
-
-\begin{enumerate}
-\item A running POP3 mail server (or access to one)
-\item A running SMTP mail server (or access to one)
-\item The Post Office library from Franz Inc.
-\item AllegroServe
-\end{enumerate}
-
-Once these components are in place, you can start the application by loading all the source
-files and calling:
-
-\begin{verbatim}
-(start-squeaky)
-\end{verbatim}
-
-Then point your web browser to:
-
-\begin{verbatim}
-http://localhost:9876/squeaky
-\end{verbatim}
-
-You should see the main index page with your mail messages listed. From there you can
-read, compose, and delete messages.
-
-\section{Security Considerations}
-
-This example application is intended for demonstration purposes only and should not be used
-in a production environment without significant security enhancements. In particular:
+\section{Books}
 
 \begin{itemize}
-\item The application does not implement user authentication
-\item Passwords are not encrypted
-\item There is no session management to prevent unauthorized access
-\item The application assumes a single user
+\item \textbf{Practical Common Lisp}, Peter Seibel, Apress, 2005. A
+full introduction for working programmers, with chapters that build
+real programs. Free to read at \url{https://gigamonkeys.com/book/}.
+
+\item \textbf{Common Lisp: A Gentle Introduction to Symbolic
+Computation}, David S. Touretzky. Starts from nothing and goes
+slowly. A good choice if this book moved too fast. Free at
+\url{https://www.cs.cmu.edu/~dst/LispBook/}.
+
+\item \textbf{ANSI Common Lisp}, Paul Graham, Prentice Hall, 1996. A
+compact tutorial followed by a compact reference.
+
+\item \textbf{On Lisp}, Paul Graham, Prentice Hall, 1993. The classic
+book about macros and building languages on Lisp. Free at
+\url{https://www.paulgraham.com/onlisp.html}.
+
+\item \textbf{Paradigms of Artificial Intelligence Programming},
+Peter Norvig, Morgan Kaufmann, 1992. Teaches programming at a high
+level through substantial programs in Common Lisp. Free at
+\url{https://github.com/norvig/paip-lisp}.
+
+\item \textbf{Object-Oriented Programming in Common Lisp}, Sonya
+Keene, Addison-Wesley, 1989. The standard introduction to CLOS.
+
+\item \textbf{Common Lisp Recipes}, Edmund Weitz, Apress, 2016.
+Hundreds of specific problems and their solutions, with explanations
+of why.
 \end{itemize}
 
-For a production application, you would need to implement proper authentication, session
-management, and access controls.
+\section{Libraries and Examples}
 
-\section{Enhancements}
+To find a library for a job, start with the Awesome CL list,
+\url{https://github.com/CodyReichert/awesome-cl}, which sorts the
+well-regarded libraries by subject, or search Quicklisp from the REPL
+with \code{ql:system-apropos}. CLiki, \url{https://www.cliki.net}, is
+the community's long-running wiki.
 
-Some possible enhancements to this application might include:
+The best way to get better at Lisp is to read programs. Every library
+you load with Quicklisp is on your disk in source form, and
+\code{M-.} in your editor takes you from any function's name to its
+definition. Read the code of the libraries you use. Much of it is
+short and very good.
 
-\begin{itemize}
-\item Support for IMAP in addition to POP3
-\item Ability to reply to messages
-\item Support for attachments
-\item Better formatting of HTML email
-\item Address book functionality
-\item Folders and message filtering
-\item Search functionality
-\item Support for multiple users with authentication
-\end{itemize}
+For complete applications to read and run, see the sites above, and
+for engineering and web applications built with Gendl, the examples at
+\url{https://github.com/genworks/demos}.
 
-\section{Conclusion}
+\section{Community}
 
-This chapter has demonstrated a complete, albeit simple, web application written in Common
-Lisp. The example shows how the various concepts covered in earlier chapters come together
-in a real application:
+\url{https://common-lisp.net} hosts many of the central projects and
+has pointers to the rest. Planet Lisp, \url{https://planet.lisp.org},
+collects the blogs of people who write about Lisp. Questions are
+welcome in the \code{r/Common\_Lisp} forum on Reddit, on the Lisp
+Discord server, and in the \code{\#commonlisp} channel on the
+Libera.Chat IRC network. The European Lisp Symposium meets every
+spring, and its papers and talks are online.
 
-\begin{itemize}
-\item Use of global parameters to maintain state
-\item Multi-threaded programming with process locks
-\item Web serving with AllegroServe
-\item Dynamic HTML generation
-\item External library integration (POP3/SMTP)
-\item Data structures and list manipulation
-\end{itemize}
+\section{A Last Word}
 
-The complete source code for Squeakymail, along with installation instructions, can be
-downloaded from the URL given at the beginning of this chapter. We encourage you to
-download, install, and experiment with this application as a learning tool for Common Lisp
-development.
+The way of working this book has described, with a running image, a
+REPL, and a program built and changed a piece at a time, will feel odd
+for a few days if you are used to compiling and running whole
+programs. Stay with it. Start small, try each piece as you write it,
+ask the running Lisp when you are not sure, and let the language grow
+toward your problem.
+
+Corrections to this book, and suggestions for making it clearer, are
+welcome at \url{https://github.com/genworks/understanding-common-lisp}.
