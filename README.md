@@ -6,11 +6,12 @@ A short book introducing Common Lisp to working programmers, by
 **Read it:** [understanding-common-lisp.pdf](https://davecooper.name/understanding-common-lisp.pdf),
 built from this repository on every change.
 
-Franz Inc. published the first three editions as *Basic Lisp
-Techniques*, in 2000, 2003 and 2011
+This is the first edition (2026), derived from the third edition of
+*Basic Lisp Techniques*, which Franz Inc. published in three editions,
+in 2000, 2003 and 2011
 ([Franz's PDF](https://franz.com/resources/educational_resources/cooper.book.pdf)),
-and has distributed it free ever since.  This fourth edition (2026)
-takes the title the book was meant to have, and is rewritten for
+and has distributed free ever since.  It takes the title the book was
+meant to have, and is rewritten for
 current practice: it is no longer tied to one implementation, the
 examples are shown as SBCL prints them and run on any Common Lisp,
 and the tooling is today's (Quicklisp, ASDF, SLIME and Sly, portable
