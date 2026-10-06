@@ -6,9 +6,10 @@ A short book introducing Common Lisp to working programmers, by
 **Read it:** [understanding-common-lisp.pdf](https://davecooper.name/understanding-common-lisp.pdf),
 built from this repository on every change.
 
-Franz Inc. published the first edition in 2003 as *Basic Lisp
-Techniques* ([the 2003 edition](https://franz.com/resources/educational_resources/cooper.book.pdf)),
-and has distributed it as a free PDF ever since.  This 2026 edition
+Franz Inc. published the first three editions as *Basic Lisp
+Techniques*, in 2000, 2003 and 2011
+([Franz's PDF](https://franz.com/resources/educational_resources/cooper.book.pdf)),
+and has distributed it free ever since.  This fourth edition (2026)
 takes the title the book was meant to have, and is rewritten for
 current practice: it is no longer tied to one implementation, the
 examples are shown as SBCL prints them and run on any Common Lisp,
@@ -49,16 +50,7 @@ Or, with Docker and nothing else installed:
 The same build runs in CI (`.gitlab-ci.yml`) on every push to
 `master`, and its PDF is what the link above serves.
 
-## Contributing
+## Copyright
 
-Corrections, updates and improvements are welcome as pull requests;
-see [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## License
-
-Copyright © 2003, 2026 Franz Inc. and Dave Cooper.
-
-The text of this book is licensed under the Creative Commons
-Attribution-ShareAlike 4.0 International License
-([CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)); the
-full legal code is in [LICENSE](LICENSE).
+Copyright © 2000, 2003, 2011, 2026 Franz Inc. and Dave Cooper.
+All rights reserved.

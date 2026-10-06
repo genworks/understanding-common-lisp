@@ -25,7 +25,7 @@
 
 \title{Understanding Common Lisp}
 \author{\href{https://davecooper.name}{Dave Cooper}}
-\date{2026 Edition}
+\date{Fourth Edition, 2026}
 
 \begin{document}
 
@@ -37,16 +37,13 @@
 \thispagestyle{empty}
 \vspace*{\fill}
 \begin{center}
-Copyright \copyright{} 2003, 2026 Franz Inc. and
-\href{https://davecooper.name}{Dave Cooper}.
+Copyright \copyright{} 2000, 2003, 2011, 2026 Franz Inc. and
+\href{https://davecooper.name}{Dave Cooper}.\\
+All rights reserved.
 
 \medskip
-First published in 2003 as \emph{Basic Lisp Techniques}.
-
-\medskip
-This book is licensed under the Creative Commons
-Attribution-ShareAlike 4.0 International License,\\
-\url{https://creativecommons.org/licenses/by-sa/4.0/}.
+The first three editions were published by Franz Inc.\\
+as \emph{Basic Lisp Techniques}, in 2000, 2003 and 2011.
 
 \medskip
 The source is at
@@ -56,16 +53,23 @@ The source is at
 \clearpage
 
 % Preface
-\chapter*{Preface to the 2026 Edition}
-\addcontentsline{toc}{chapter}{Preface to the 2026 Edition}
+\chapter*{Preface to the Fourth Edition}
+\addcontentsline{toc}{chapter}{Preface to the Fourth Edition}
 
-Franz Inc. commissioned this book and published it in 2003 as
-\emph{Basic Lisp Techniques}. It has been a free download from their
-website ever since, and it has served many programmers as a quick
-start in the language. The title it was meant to have was
-\emph{Understanding Common Lisp}, and this edition takes that name.
+Franz Inc. published this book as \emph{Basic Lisp Techniques} in
+2000, and again in a second edition in 2003 and a third in 2011. It
+has been a free download from their website all that time, and it has
+served many programmers as a quick start in the language. The title it
+was meant to have was \emph{Understanding Common Lisp}, and this
+fourth edition takes that name.
 
-The language has hardly changed since 2003. Common Lisp is defined by
+The third edition was made the hard way. By 2011 I had lost the LaTeX
+source of the book, and Steve Sears of Franz made that edition's
+changes by editing the PDF itself. For this edition the source was
+reconstructed from the book, and it is now kept in a public
+repository, at the address on the copyright page.
+
+The language has hardly changed since 2000. Common Lisp is defined by
 a standard that was finished in 1994, and a program written to that
 standard then still runs now. What has changed is everything around
 the language. There are several free implementations that compile to
@@ -75,8 +79,8 @@ to come with one vendor's product works with every implementation.
 And many of us now write Lisp alongside an AI agent that can evaluate
 code in the same running image we are working in.
 
-The first edition was written around one implementation, Allegro CL.
-This one is written so that the examples run on any Common Lisp. They
+The earlier editions were written around one implementation, Allegro
+CL. This one is written so that the examples run on any Common Lisp. They
 are shown as SBCL prints them, since SBCL is free and is what most
 newcomers install first, and every one of them was run before it went
 into the book.
@@ -84,15 +88,13 @@ into the book.
 The book is still short. It is for a working programmer who wants to
 read and write Common Lisp with some confidence in a few sittings, and
 who will go on to the longer books and the reference material after
-that. The first edition ended with a sample application. That chapter
-is gone: there are plenty of real programs to read online now, and
-Chapter~5 says where to find them.
+that. The earlier editions ended with a sample application. That
+chapter is gone: there are plenty of real programs to read online now,
+and Chapter~5 says where to find them.
 
-Corrections and improvements are welcome at the address on the
-copyright page.
-
-My thanks to Franz Inc., who asked for the first edition and have kept
-it available for more than twenty years.
+My thanks to Franz Inc., who asked for this book in the first place
+and have kept it available for more than twenty-five years, and to
+Steve Sears, for the third edition.
 
 \begin{flushright}
 Dave Cooper\\
@@ -100,8 +102,8 @@ Dave Cooper\\
 \end{flushright}
 
 % Foreword
-\chapter*{Foreword to the 2003 Edition\footnote{This foreword was written by Franz Inc. for the first edition, and is reprinted as it appeared there.}}
-\addcontentsline{toc}{chapter}{Foreword to the 2003 Edition}
+\chapter*{Foreword by Franz Inc.\footnote{This foreword was written by Franz Inc. for the earlier editions, and is reprinted as it appeared there.}}
+\addcontentsline{toc}{chapter}{Foreword by Franz Inc.}
 
 Computers, and the software applications that power them, permeate every facet of our
 daily lives. From groceries to airline reservations to dental appointments, our reliance
